@@ -1,11 +1,11 @@
-import {StyleSheet, Text, View, Image, Pressable} from 'react-native'
-import React from 'react'
-import ScreenWrapper from "../components/ScreenWrapper";
-import {StatusBar} from "expo-status-bar";
-import {hp, wp} from "../helpers/common";
-import {theme} from "../constants/theme";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from "../components/Button";
-import {useRouter} from "expo-router";
+import LeafAnimation from "../components/LeafAnimation";
+import ScreenWrapper from "../components/ScreenWrapper";
+import { theme } from "../constants/theme";
+import { hp, wp } from "../helpers/common";
 
 export default function Welcome() {
 
@@ -14,6 +14,7 @@ export default function Welcome() {
     return (
         <ScreenWrapper bg='white'>
             <StatusBar style="dark" />
+            <LeafAnimation />
             <View style={styles.container}>
 
                 {/* Welcome Image */}

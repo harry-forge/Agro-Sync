@@ -1,10 +1,8 @@
-import {Stack, useRouter} from 'expo-router';
 import { useFonts } from 'expo-font';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import {AuthProvider, useAuth} from "../contexts/AuthContext";
-import {supabase} from "../lib/supabase";
-import {getUserData} from "../services/userService";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 // Prevent the splash screen from auto-hiding while we load the fonts
 SplashScreen.preventAutoHideAsync();
@@ -63,30 +61,7 @@ export function MainLayout() {
         // ---------------------------------
     });
 
-    // Effect to handle Supabase Auth state changes
-    useEffect(() => {
-        // Only run this logic if setAuth is defined (i.e., inside the context)
-        if (setAuth) {
-            supabase.auth.onAuthStateChange((_event, session)=> {
-                console.log('Session User: ', session?.user?.id);
-
-                if (session) {
-                    setAuth(session?.user)
-                    updateUserData(session?.user)
-                    router.replace('/home')
-                } else {
-                    setAuth(null)
-                    router.replace('/welcome')
-                }
-            })
-        }
-    },[])
-
-    const updateUserData = async (user) => {
-        let res = await getUserData(user?.id);
-        console.log('got user data: ', res);
-        if(res.success) setUserData(res.data);
-    }
+    // Authentication is now handled in the AuthContext
 
     // Effect to hide the splash screen when loading is complete or failed.
     useEffect(() => {

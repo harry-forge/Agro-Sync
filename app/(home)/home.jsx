@@ -1,18 +1,20 @@
-import {Alert, StyleSheet, Text, View} from 'react-native'
-import React from 'react'
-import ScreenWrapper from "../../components/ScreenWrapper";
+import { router } from "expo-router";
+import { Alert, StyleSheet, Text } from 'react-native';
 import Button from "../../components/Button";
-import {useAuth} from "../../contexts/AuthContext";
-import {supabase} from "../../lib/supabase";
+import ScreenWrapper from "../../components/ScreenWrapper";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Home = () => {
 
-    const {setAuth} = useAuth();
+    const {logout} = useAuth();
+    
     const onLogout = async () => {
-        // setAuth(null);
-        const {error} = await supabase.auth.signOut();
-        if(error){
-            Alert.alert('LogOut', error.message);
+        const result = await logout();
+        if(result.success) {
+            // Successfully logged out, navigate to welcome screen
+            router.replace('/welcome');
+        } else {
+            Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
         }
     }
 
