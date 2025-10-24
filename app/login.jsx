@@ -9,6 +9,7 @@ import { theme } from "../constants/theme";
 import Input from "../components/Input";
 import Icons from "../assets/icons/Icons";
 import Button from "../components/Button";
+import {supabase} from "../lib/supabase";
 // Note: useFonts and SplashScreen imports are now handled in app/_layout.js
 
 const Login = () => {
@@ -23,7 +24,19 @@ const Login = () => {
             return;
         }
 
-        //good to go
+        let email = emailRef.current.trim();
+        let password = passwordRef.current.trim();
+        setLoading(true);
+        const {error} = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+        setLoading(false);
+
+        console.log(error);
+        if(error){
+            Alert.alert('Login', error.message);
+        }
     }
 
     return (

@@ -1,14 +1,30 @@
-import { Stack } from 'expo-router';
+import {Stack, useRouter} from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import {AuthProvider, useAuth} from "../contexts/AuthContext";
+import {supabase} from "../lib/supabase";
+import {getUserData} from "../services/userService";
 
 // Prevent the splash screen from auto-hiding while we load the fonts
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+const RootLayoutWithProvider = () => {
+    return(
+        <AuthProvider>
+            <MainLayout />
+        </AuthProvider>
+    )
+}
 
-    // Load all font files from the assets folder at the root level.
+export default RootLayoutWithProvider;
+// 2. MAIN LAYOUT: This is the component that uses the context.
+// It is now rendered *inside* the <AuthProvider>.
+export function MainLayout() {
+    // This call is now safe because MainLayout is a child of AuthProvider.
+    const {setAuth, setUserData} = useAuth();
+    const router = useRouter();
+
     const [fontsLoaded, fontError] = useFonts({
         // --- LOAD ALL YOUR FONTS HERE ---
         'SFNSDisplay-Black': require('../assets/fonts/SFNSDisplay-Black.otf'),
@@ -47,6 +63,31 @@ export default function RootLayout() {
         // ---------------------------------
     });
 
+    // Effect to handle Supabase Auth state changes
+    useEffect(() => {
+        // Only run this logic if setAuth is defined (i.e., inside the context)
+        if (setAuth) {
+            supabase.auth.onAuthStateChange((_event, session)=> {
+                console.log('Session User: ', session?.user?.id);
+
+                if (session) {
+                    setAuth(session?.user)
+                    updateUserData(session?.user)
+                    router.replace('/home')
+                } else {
+                    setAuth(null)
+                    router.replace('/welcome')
+                }
+            })
+        }
+    },[])
+
+    const updateUserData = async (user) => {
+        let res = await getUserData(user?.id);
+        console.log('got user data: ', res);
+        if(res.success) setUserData(res.data);
+    }
+
     // Effect to hide the splash screen when loading is complete or failed.
     useEffect(() => {
         if (fontsLoaded || fontError) {
@@ -59,7 +100,6 @@ export default function RootLayout() {
     useEffect(() => {
         if (fontError) {
             console.error(fontError);
-            // In a real app, you might render an error page here.
         }
     }, [fontError]);
 
