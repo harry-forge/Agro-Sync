@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import LottieView from 'lottie-react-native';
 import { useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Icons from "../assets/icons/Icons";
 import AnimatedUnderline from "../components/AnimatedUnderline";
 import BackButton from "../components/BackButton";
@@ -51,7 +52,12 @@ const Login = () => {
 
     return (
         <ScreenWrapper bg='white'>
-            <View style={styles.container}>
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={0}
+            >
+                <View style={styles.container}>
                 <StatusBar style="dark" />
                 <BackButton router={router} />
 
@@ -102,6 +108,18 @@ const Login = () => {
                 </View>
 
             </View>
+            
+            {/* Bottom Nature Animation */}
+            <View style={styles.bottomAnimation}>
+                <LottieView
+                    source={require('../assets/animations/nature.json')}
+                    style={styles.natureAnimation}
+                    autoPlay
+                    loop
+                    speed={0.8}
+                />
+            </View>
+            </KeyboardAvoidingView>
         </ScreenWrapper>
     );
 };
@@ -161,13 +179,36 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         gap: 5,
-        zIndex: 2,
+        zIndex: 10,
         paddingBottom: hp(3),
+        position: 'relative',
     },
     footerText: {
         textAlign: "center",
         color: theme.colors.text,
         fontSize: hp(1.6),
         fontFamily: 'SFNSText-Regular',
+    },
+    bottomAnimation: {
+        position: 'absolute',
+        bottom: -hp(3),
+        left: -wp(30),
+        right: -wp(30),
+        width: wp(160),
+        height: hp(20),
+        zIndex: 1,
+        opacity: 0.8,
+        overflow: 'visible',
+        marginLeft: 0,
+        marginRight: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+    },
+    natureAnimation: {
+        width: wp(160),
+        height: hp(20),
+        tintColor: '#2E86C1',
+        resizeMode: 'stretch',
+        transform: [{ scaleX: 1.5 }],
     }
 });

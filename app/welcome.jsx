@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import LottieView from 'lottie-react-native';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from "../components/Button";
 import LeafAnimation from "../components/LeafAnimation";
@@ -50,6 +51,17 @@ export default function Welcome() {
                 </View>
 
             </View>
+            
+            {/* Bottom Nature Animation */}
+            <View style={styles.bottomAnimation}>
+                <LottieView
+                    source={require('../assets/animations/nature.json')}
+                    style={styles.natureAnimation}
+                    autoPlay
+                    loop
+                    speed={0.8}
+                />
+            </View>
         </ScreenWrapper>
     )
 }
@@ -89,10 +101,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 5,
         marginBottom: hp(10),
+        zIndex: 20,
+        position: 'relative',
     },
     loginText: {
         textAlign: 'center',
         color: theme.colors.text,
         fontSize: hp(1.6),
+    },
+    bottomAnimation: {
+        position: 'absolute',
+        bottom: -hp(3),
+        left: -wp(30),
+        right: -wp(30),
+        width: wp(160),
+        height: hp(20),
+        zIndex: 1,
+        opacity: 0.8,
+        overflow: 'visible',
+        marginLeft: 0,
+        marginRight: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+    },
+    natureAnimation: {
+        width: wp(160),
+        height: hp(20),
+        tintColor: '#2E86C1',
+        resizeMode: 'stretch',
+        transform: [{ scaleX: 1.5 }],
     }
 })
