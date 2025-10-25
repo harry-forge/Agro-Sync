@@ -17,7 +17,7 @@ const Home = () => {
     const [isHindi, setIsHindi] = useState(false);
     const [showCursor, setShowCursor] = useState(true);
     const [weatherCondition, setWeatherCondition] = useState('sunny');
-    const [currentLottieSource, setCurrentLottieSource] = useState(null);
+    const [currentLottieSource, setCurrentLottieSource] = useState(require('../../assets/animations/sunny.json'));
     const lottieRef = useRef(null);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const moveUpAnim = useRef(new Animated.Value(0)).current;
@@ -340,14 +340,16 @@ const Home = () => {
                                 transform: [{ scale: bounceAnim }]
                             }
                         ]}>
-                            <LottieView
-                                ref={lottieRef}
-                                source={currentLottieSource}
-                                style={styles.lottieWeather}
-                                autoPlay
-                                loop
-                                speed={0.8}
-                            />
+                            {currentLottieSource && (
+                                <LottieView
+                                    ref={lottieRef}
+                                    source={currentLottieSource}
+                                    style={styles.lottieWeather}
+                                    autoPlay
+                                    loop
+                                    speed={0.8}
+                                />
+                            )}
                         </Animated.View>
 
                         {/* Animated Profile Icon */}
