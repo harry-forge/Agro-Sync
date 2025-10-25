@@ -45,6 +45,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "weatherApiKey": "3b0832ddf6dc414c815190329252410"
     }
   }
 }

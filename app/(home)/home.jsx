@@ -1,13 +1,15 @@
+import * as Location from 'expo-location';
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from "../../components/Button";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { theme } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { hp, wp } from "../../helpers/common";
+import { weatherService } from "../../services/weatherService";
 
 const Home = () => {
     const { user, logout } = useAuth();
@@ -18,6 +20,9 @@ const Home = () => {
     const [showCursor, setShowCursor] = useState(true);
     const [weatherCondition, setWeatherCondition] = useState('sunny');
     const [currentLottieSource, setCurrentLottieSource] = useState(require('../../assets/animations/sunny.json'));
+    const [weatherData, setWeatherData] = useState(null);
+    const [weatherLoading, setWeatherLoading] = useState(true);
+    const [location, setLocation] = useState({ latitude: null, longitude: null });
     const lottieRef = useRef(null);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const moveUpAnim = useRef(new Animated.Value(0)).current;
@@ -140,10 +145,11 @@ const Home = () => {
         const initialGreeting = getGreeting(false);
         setGreeting(initialGreeting);
         
-        // Set initial weather
-        const initialWeather = getWeatherCondition();
-        setWeatherCondition(initialWeather.condition);
-        setCurrentLottieSource(initialWeather.lottie);
+        // Test API key first
+        weatherService.testApiKey();
+        
+        // Get user location and fetch weather
+        getUserLocation();
         
         // Start initial typing effect
         setTimeout(() => {
@@ -160,17 +166,51 @@ const Home = () => {
             });
         }, 5000); // Switch every 5 seconds to allow typing animation to complete
 
-        // Weather animation - change every 8 seconds
-        const weatherInterval = setInterval(() => {
-            const newWeather = getWeatherCondition();
-            animateWeatherChange(newWeather);
-        }, 8000); // Change weather every 8 seconds
-
         return () => {
             clearInterval(languageInterval);
-            clearInterval(weatherInterval);
         };
     }, []);
+
+    // Fetch weather when location is available
+    useEffect(() => {
+        console.log('Location changed:', location);
+        if (location.latitude && location.longitude) {
+            console.log('Fetching weather for location:', location.latitude, location.longitude);
+            fetchWeatherData(location.latitude, location.longitude);
+            
+            // Refresh weather every 10 minutes
+            const weatherInterval = setInterval(() => {
+                fetchWeatherData(location.latitude, location.longitude);
+            }, 600000); // 10 minutes
+
+            return () => clearInterval(weatherInterval);
+        } else {
+            console.log('Location not available yet');
+        }
+    }, [location]);
+
+    // Fetch weather data from API
+    const fetchWeatherData = async (lat, lon) => {
+        try {
+            setWeatherLoading(true);
+            const result = await weatherService.getCurrentWeather(lat, lon);
+            
+            if (result.success) {
+                setWeatherData(result.data);
+                
+                // Update animation based on real weather
+                const condition = mapWeatherCondition(result.data.current.condition.code, result.data.current.is_day);
+                setWeatherCondition(condition);
+                setCurrentLottieSource(weatherAnimations[condition] || weatherAnimations['sunny']);
+            } else {
+                console.error('Weather API error:', result.error);
+            }
+        } catch (error) {
+            console.error('Error fetching weather:', error);
+        } finally {
+            setWeatherLoading(false);
+        }
+    };
 
     // Get user's first name
     const getUserName = () => {
@@ -178,6 +218,103 @@ const Home = () => {
         if (user?.name) return user.name.split(' ')[0];
         if (user?.email) return user.email.split('@')[0];
         return 'Friend';
+    };
+
+    // Get user's location
+    const getUserLocation = async () => {
+        try {
+            console.log('Requesting location permissions...');
+            // Request permissions
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            console.log('Location permission status:', status);
+            
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied, using fallback');
+                // Fallback to a default location (New Delhi)
+                setLocation({
+                    latitude: 28.6139,
+                    longitude: 77.2090
+                });
+                return;
+            }
+
+            console.log('Getting current position...');
+            // Get current location
+            let location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+                timeout: 10000,
+            });
+            
+            console.log('Got location:', location.coords.latitude, location.coords.longitude);
+            setLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+        } catch (error) {
+            console.log('Location error:', error);
+            // Fallback to a default location (New Delhi)
+            console.log('Using fallback location: New Delhi');
+            setLocation({
+                latitude: 28.6139,
+                longitude: 77.2090
+            });
+        }
+    };
+
+    // Map weather API condition codes to our animations
+    const mapWeatherCondition = (code, isDay) => {
+        const conditionMap = {
+            1000: isDay ? 'sunny' : 'clear-night', // Sunny/Clear
+            1003: 'cloudy', // Partly cloudy
+            1006: 'cloudy', // Cloudy
+            1009: 'cloudy', // Overcast
+            1030: 'cloudy', // Mist
+            1063: 'rainy', // Patchy rain possible
+            1066: 'storm', // Patchy snow possible
+            1069: 'storm', // Patchy sleet possible
+            1072: 'storm', // Patchy freezing drizzle possible
+            1087: 'storm', // Thundery outbreaks possible
+            1114: 'windy', // Blowing snow
+            1117: 'storm', // Blizzard
+            1135: 'cloudy', // Fog
+            1147: 'cloudy', // Freezing fog
+            1150: 'rainy', // Patchy light drizzle
+            1153: 'rainy', // Light drizzle
+            1168: 'rainy', // Freezing drizzle
+            1171: 'rainy', // Heavy freezing drizzle
+            1180: 'rainy', // Patchy light rain
+            1183: 'rainy', // Light rain
+            1186: 'rainy', // Moderate rain at times
+            1189: 'rainy', // Moderate rain
+            1192: 'rainy', // Heavy rain at times
+            1195: 'rainy', // Heavy rain
+            1198: 'rainy', // Light freezing rain
+            1201: 'rainy', // Moderate or heavy freezing rain
+            1204: 'storm', // Light sleet
+            1207: 'storm', // Moderate or heavy sleet
+            1210: 'storm', // Patchy light snow
+            1213: 'storm', // Light snow
+            1216: 'storm', // Patchy moderate snow
+            1219: 'storm', // Moderate snow
+            1222: 'storm', // Patchy heavy snow
+            1225: 'storm', // Heavy snow
+            1237: 'storm', // Ice pellets
+            1240: 'rainy', // Light rain shower
+            1243: 'rainy', // Moderate or heavy rain shower
+            1246: 'storm', // Torrential rain shower
+            1249: 'storm', // Light sleet showers
+            1252: 'storm', // Moderate or heavy sleet showers
+            1255: 'storm', // Light snow showers
+            1258: 'storm', // Moderate or heavy snow showers
+            1261: 'storm', // Light showers of ice pellets
+            1264: 'storm', // Moderate or heavy showers of ice pellets
+            1273: 'storm', // Patchy light rain with thunder
+            1276: 'storm', // Moderate or heavy rain with thunder
+            1279: 'storm', // Patchy light snow with thunder
+            1282: 'storm', // Moderate or heavy snow with thunder
+        };
+
+        return conditionMap[code] || (isDay ? 'sunny' : 'clear-night');
     };
 
     // Weather animation sources - only Lottie animations
@@ -364,6 +501,140 @@ const Home = () => {
                     </View>
                 </View>
 
+                {/* Weather Section */}
+                <View style={styles.weatherSection}>
+                    {weatherLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <Text style={styles.loadingText}>Loading weather...</Text>
+                        </View>
+                    ) : weatherData ? (
+                        <View style={styles.weatherCard}>
+                            <View style={styles.weatherHeader}>
+                                <Text style={styles.locationText}>
+                                    📍 {weatherData.location.name}, {weatherData.location.country}
+                                </Text>
+                                <Text style={styles.lastUpdated}>
+                                    Updated: {new Date(weatherData.current.last_updated).toLocaleTimeString('en-US', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    })}
+                                </Text>
+                            </View>
+                            
+                            <View style={styles.weatherMain}>
+                                <View style={styles.temperatureContainer}>
+                                    <Text style={styles.temperature}>
+                                        {Math.round(weatherData.current.temp_c)}°
+                                    </Text>
+                                    <View style={styles.temperatureDetails}>
+                                        <Text style={styles.condition}>
+                                            {weatherData.current.condition.text}
+                                        </Text>
+                                        <Text style={styles.feelsLike}>
+                                            Feels like {Math.round(weatherData.current.feelslike_c)}°C
+                                        </Text>
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.weatherIcon}>
+                                    {currentLottieSource && (
+                                        <LottieView
+                                            source={currentLottieSource}
+                                            style={styles.weatherLottieIcon}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    )}
+                                </View>
+                            </View>
+                            
+                            <View style={styles.weatherDetails}>
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/clouds.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Humidity</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.humidity}%</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/windblow.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Wind</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.wind_kph} km/h</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/uv-index.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>UV Index</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.uv}</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/sunny.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Visibility</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.vis_km} km</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={styles.weatherError}>
+                            <Text style={styles.errorText}>Unable to load weather data</Text>
+                            <Pressable 
+                                style={styles.retryButton}
+                                onPress={() => {
+                                    if (location.latitude && location.longitude) {
+                                        fetchWeatherData(location.latitude, location.longitude);
+                                    } else {
+                                        getUserLocation();
+                                    }
+                                }}
+                            >
+                                <Text style={styles.retryButtonText}>Retry</Text>
+                            </Pressable>
+                        </View>
+                    )}
+                </View>
+
                 {/* Main Content Area */}
                 <View style={styles.content}>
                     {/* Content will be added here */}
@@ -483,9 +754,175 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
+    weatherSection: {
+        paddingHorizontal: wp(2),
+        paddingBottom: hp(2),
+    },
+    loadingContainer: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        padding: wp(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        minHeight: hp(20),
+    },
+    loadingText: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSText-Medium',
+        color: theme.colors.textLight,
+        marginTop: hp(1),
+    },
+    weatherCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 20,
+        padding: wp(5),
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.1)',
+    },
+    weatherHeader: {
+        marginBottom: hp(2),
+    },
+    locationText: {
+        fontSize: hp(1.9),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        marginBottom: hp(0.5),
+    },
+    lastUpdated: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+    },
+    weatherMain: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: hp(2.5),
+    },
+    temperatureContainer: {
+        flex: 1,
+    },
+    temperature: {
+        fontSize: hp(7),
+        fontFamily: 'SFNSDisplay-Heavy',
+        color: theme.colors.primary,
+        lineHeight: hp(7),
+        marginBottom: hp(0.5),
+    },
+    temperatureDetails: {
+        gap: hp(0.3),
+    },
+    condition: {
+        fontSize: hp(2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        textTransform: 'capitalize',
+    },
+    feelsLike: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+    },
+    weatherIcon: {
+        width: wp(20),
+        height: wp(20),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    weatherLottieIcon: {
+        width: wp(18),
+        height: wp(18),
+    },
+    weatherDetails: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: hp(1),
+        paddingTop: hp(2),
+        paddingHorizontal: wp(1),
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    detailItem: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: wp(20),
+        maxWidth: wp(22),
+        paddingVertical: hp(0.8),
+        paddingHorizontal: wp(1),
+    },
+    detailIcon: {
+        width: wp(10),
+        height: wp(10),
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: hp(0.3),
+    },
+    detailLottie: {
+        width: wp(8),
+        height: wp(8),
+    },
+    detailTextGroup: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: hp(0.1),
+    },
+    detailLabel: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+        marginBottom: hp(0.3),
+    },
+    detailValue: {
+        fontSize: hp(1.7),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+    },
+    weatherError: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        padding: wp(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        minHeight: hp(15),
+    },
+    errorText: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSText-Medium',
+        color: theme.colors.textLight,
+        marginBottom: hp(2),
+        textAlign: 'center',
+    },
+    retryButton: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: wp(6),
+        paddingVertical: hp(1.2),
+        borderRadius: 12,
+    },
+    retryButtonText: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: 'white',
+    },
     content: {
         flex: 1,
-        paddingVertical: hp(4),
+        paddingVertical: hp(2),
     },
     footer: {
         paddingBottom: hp(4),
