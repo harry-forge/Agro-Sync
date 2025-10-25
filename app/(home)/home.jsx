@@ -12,6 +12,7 @@ import { hp, wp } from "../../helpers/common";
 const Home = () => {
     const { user, logout } = useAuth();
     const [greeting, setGreeting] = useState('');
+    const [loading, setLoading] = useState(false);
     const [displayedText, setDisplayedText] = useState('');
     const [isHindi, setIsHindi] = useState(false);
     const [showCursor, setShowCursor] = useState(true);
@@ -270,12 +271,16 @@ const Home = () => {
     };
 
     const onLogout = async () => {
+        setLoading(true);
         const result = await logout();
         if(result.success) {
             router.replace('/welcome');
+            setLoading(false);
         } else {
             Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
+            setLoading(false);
         }
+        setLoading(false);
     };
 
     const onProfilePress = () => {
@@ -364,7 +369,7 @@ const Home = () => {
 
                 {/* Temporary logout button - will be moved to profile later */}
                 <View style={styles.footer}>
-                    <Button title={'Log Out'} onPress={onLogout} />
+                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
                 </View>
             </View>
         </ScreenWrapper>
