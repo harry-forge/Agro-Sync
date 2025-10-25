@@ -11,9 +11,7 @@ export default {
         userInterfaceStyle: "automatic",
         newArchEnabled: true,
 
-        ios: {
-            supportsTablet: true
-        },
+        ios: { supportsTablet: true },
 
         android: {
             adaptiveIcon: {
@@ -40,9 +38,7 @@ export default {
                     imageWidth: 200,
                     resizeMode: "contain",
                     backgroundColor: "#ffffff",
-                    dark: {
-                        backgroundColor: "#000000"
-                    }
+                    dark: { backgroundColor: "#000000" }
                 }
             ],
             "expo-font",
@@ -54,10 +50,10 @@ export default {
             reactCompiler: true
         },
 
-        // ✅ Add your .env variables here
         extra: {
             supabaseUrl: process.env.EXPO_SUPABASE_URL,
             supabaseAnonKey: process.env.EXPO_SUPABASE_ANON_KEY,
+            weatherApiKey: process.env.EXPO_PUBLIC_WEATHER_API_KEY
         }
     }
 };
