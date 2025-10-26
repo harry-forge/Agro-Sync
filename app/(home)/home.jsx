@@ -33,11 +33,11 @@ const Home = () => {
     // Get time-based greeting in both languages
     const getGreeting = (useHindi = false) => {
         const hour = new Date().getHours();
-        
+
         const greetings = {
             english: {
                 morning: 'Good Morning',
-                afternoon: 'Good Afternoon', 
+                afternoon: 'Good Afternoon',
                 evening: 'Good Evening',
                 night: 'Good Night'
             },
@@ -50,7 +50,7 @@ const Home = () => {
         };
 
         const lang = useHindi ? greetings.hindi : greetings.english;
-        
+
         if (hour >= 5 && hour < 12) return lang.morning;
         if (hour >= 12 && hour < 17) return lang.afternoon;
         if (hour >= 17 && hour < 21) return lang.evening;
@@ -59,7 +59,6 @@ const Home = () => {
 
     // Typing effect animation
     const animateTypingEffect = (newText) => {
-        // First fade out current text and move up slightly
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 0,
@@ -67,37 +66,38 @@ const Home = () => {
                 useNativeDriver: true,
             }),
             Animated.timing(moveUpAnim, {
-                toValue: -2, // Move 2px up
+                toValue: -2,
                 duration: 200,
                 useNativeDriver: true,
             })
         ]).start(() => {
-            // Reset position and start typing
+            // Reset displayed text and position but DO NOT set greeting yet
             setDisplayedText('');
-            setGreeting(newText);
-            moveUpAnim.setValue(0); // Reset position
-            
-            // Fade in and start typing effect
+            moveUpAnim.setValue(0);
+
+            // Fade in (visual only)
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 300,
                 useNativeDriver: true,
             }).start();
 
-            // Start typing animation
             const fullText = `${newText}, ${getUserName()}`;
             let currentIndex = 0;
-            
+
             const typingInterval = setInterval(() => {
                 if (currentIndex <= fullText.length) {
                     setDisplayedText(fullText.substring(0, currentIndex));
                     currentIndex++;
                 } else {
                     clearInterval(typingInterval);
+                    // now update greeting state (if you need it elsewhere)
+                    setGreeting(newText);
                 }
-            }, 80); // 80ms between each character
+            }, 80);
         });
     };
+
 
     // Cursor blinking animation
     useEffect(() => {
@@ -106,16 +106,16 @@ const Home = () => {
                 Animated.timing(cursorAnim, {
                     toValue: 0,
                     duration: 500,
-                    useNativeDriver: true,
+                    useNativeDriver: false, // <-- FIXED
                 }),
                 Animated.timing(cursorAnim, {
                     toValue: 1,
                     duration: 500,
-                    useNativeDriver: true,
+                    useNativeDriver: false, // <-- FIXED
                 })
             ]).start(() => blinkCursor());
         };
-        
+
         blinkCursor();
     }, []);
 
@@ -135,7 +135,7 @@ const Home = () => {
                 })
             ]).start(() => pulseWeatherIcon());
         };
-        
+
         pulseWeatherIcon();
     }, []);
 
@@ -144,13 +144,13 @@ const Home = () => {
         // Set initial greeting and start typing effect
         const initialGreeting = getGreeting(false);
         setGreeting(initialGreeting);
-        
+
         // Test API key first
         weatherService.testApiKey();
-        
+
         // Get user location and fetch weather
         getUserLocation();
-        
+
         // Start initial typing effect
         setTimeout(() => {
             animateTypingEffect(initialGreeting);
@@ -177,7 +177,7 @@ const Home = () => {
         if (location.latitude && location.longitude) {
             console.log('Fetching weather for location:', location.latitude, location.longitude);
             fetchWeatherData(location.latitude, location.longitude);
-            
+
             // Refresh weather every 10 minutes
             const weatherInterval = setInterval(() => {
                 fetchWeatherData(location.latitude, location.longitude);
@@ -194,10 +194,10 @@ const Home = () => {
         try {
             setWeatherLoading(true);
             const result = await weatherService.getCurrentWeather(lat, lon);
-            
+
             if (result.success) {
                 setWeatherData(result.data);
-                
+
                 // Update animation based on real weather
                 const condition = mapWeatherCondition(result.data.current.condition.code, result.data.current.is_day);
                 setWeatherCondition(condition);
@@ -227,7 +227,7 @@ const Home = () => {
             // Request permissions
             let { status } = await Location.requestForegroundPermissionsAsync();
             console.log('Location permission status:', status);
-            
+
             if (status !== 'granted') {
                 console.log('Permission to access location was denied, using fallback');
                 // Fallback to a default location (New Delhi)
@@ -244,7 +244,7 @@ const Home = () => {
                 accuracy: Location.Accuracy.Balanced,
                 timeout: 10000,
             });
-            
+
             console.log('Got location:', location.coords.latitude, location.coords.longitude);
             setLocation({
                 latitude: location.coords.latitude,
@@ -357,14 +357,14 @@ const Home = () => {
         // Weighted random selection
         const totalWeight = conditions.reduce((sum, c) => sum + c.weight, 0);
         let random = Math.random() * totalWeight;
-        
+
         for (const condition of conditions) {
             random -= condition.weight;
             if (random <= 0) {
                 return condition;
             }
         }
-        
+
         return conditions[0]; // Fallback
     };
 
@@ -392,13 +392,13 @@ const Home = () => {
         ]).start(() => {
             setWeatherCondition(newCondition.condition);
             setCurrentLottieSource(newCondition.lottie);
-            
+
             // Restart Lottie animation
             if (lottieRef.current) {
                 lottieRef.current.reset();
                 lottieRef.current.play();
             }
-            
+
             Animated.timing(weatherIconAnim, {
                 toValue: 1,
                 duration: 400,
@@ -445,24 +445,27 @@ const Home = () => {
                                 speed={0.5}
                             />
                         </View>
-                        
-                        <Animated.View style={[
-                            styles.animatedTextContainer,
-                            {
-                                opacity: fadeAnim,
-                                transform: [{ translateY: moveUpAnim }]
-                            }
-                        ]}>
-                            <Text style={styles.greetingText}>
+
+                        <Animated.View
+                            style={[
+                                styles.greetingContainer,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: moveUpAnim }],
+                                },
+                            ]}
+                        >
+                            <Text style={styles.greetingText} numberOfLines={1} ellipsizeMode="tail" allowFontScaling={false}>
                                 {displayedText}
-                                <Animated.Text style={[styles.cursor, { opacity: cursorAnim }]}>|</Animated.Text>
+                                {/* blinking cursor: use opacity from cursorAnim */}
+                                <Animated.Text style={{ opacity: cursorAnim }}>|</Animated.Text>
                             </Text>
                         </Animated.View>
                         <Text style={styles.dateText}>
-                            {new Date().toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                month: 'long', 
-                                day: 'numeric' 
+                            {new Date().toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric'
                             })}
                         </Text>
                     </View>
@@ -515,13 +518,13 @@ const Home = () => {
                                     📍 {weatherData.location.name}, {weatherData.location.country}
                                 </Text>
                                 <Text style={styles.lastUpdated}>
-                                    Updated: {new Date(weatherData.current.last_updated).toLocaleTimeString('en-US', { 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
-                                    })}
+                                    Updated: {new Date(weatherData.current.last_updated).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                                 </Text>
                             </View>
-                            
+
                             <View style={styles.weatherMain}>
                                 <View style={styles.temperatureContainer}>
                                     <Text style={styles.temperature}>
@@ -536,7 +539,7 @@ const Home = () => {
                                         </Text>
                                     </View>
                                 </View>
-                                
+
                                 <View style={styles.weatherIcon}>
                                     {currentLottieSource && (
                                         <LottieView
@@ -549,7 +552,7 @@ const Home = () => {
                                     )}
                                 </View>
                             </View>
-                            
+
                             <View style={styles.weatherDetails}>
                                 <View style={styles.detailItem}>
                                     <View style={styles.detailIcon}>
@@ -619,7 +622,7 @@ const Home = () => {
                     ) : (
                         <View style={styles.weatherError}>
                             <Text style={styles.errorText}>Unable to load weather data</Text>
-                            <Pressable 
+                            <Pressable
                                 style={styles.retryButton}
                                 onPress={() => {
                                     if (location.latitude && location.longitude) {
@@ -653,7 +656,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: wp(5),
-        paddingTop: hp(2),
+        // paddingTop: hp(2),
     },
     header: {
         flexDirection: 'row',
@@ -662,14 +665,14 @@ const styles = StyleSheet.create({
         paddingVertical: hp(2),
         paddingBottom: hp(3),
     },
-    greetingContainer: {
-        flex: 1,
-        overflow: 'visible', // Changed to visible to show Hindi characters properly
-        paddingVertical: hp(1), // More padding for better animation visibility
-        paddingHorizontal: wp(2), // Add horizontal padding
-        position: 'relative', // Enable positioning for background animation
-        minHeight: hp(8), // Ensure enough height for the animation
-    },
+    // greetingContainer: {
+    //     flex: 1,
+    //     overflow: 'visible', // Changed to visible to show Hindi characters properly
+    //     paddingVertical: hp(1), // More padding for better animation visibility
+    //     paddingHorizontal: wp(2), // Add horizontal padding
+    //     position: 'relative', // Enable positioning for background animation
+    //     minHeight: hp(8), // Ensure enough height for the animation
+    // },
     backgroundAnimationContainer: {
         position: 'absolute',
         top: -hp(1),
@@ -694,14 +697,14 @@ const styles = StyleSheet.create({
         paddingVertical: hp(0.5),
         marginLeft: wp(1), // Slight left margin for better positioning
     },
-    greetingText: {
-        fontSize: hp(2.8),
-        fontFamily: 'SFNSDisplay-Bold',
-        color: theme.colors.textDark,
-        lineHeight: hp(3.8), // Increased line height for better Hindi character spacing
-        includeFontPadding: false, // Remove extra font padding that can clip text
-        textAlignVertical: 'center', // Center text vertically
-    },
+    // greetingText: {
+    //     fontSize: hp(2.8),
+    //     fontFamily: 'SFNSDisplay-Bold',
+    //     color: theme.colors.textDark,
+    //     lineHeight: hp(3.8), // Increased line height for better Hindi character spacing
+    //     includeFontPadding: false, // Remove extra font padding that can clip text
+    //     textAlignVertical: 'center', // Center text vertically
+    // },
     cursor: {
         fontSize: hp(2.8),
         fontFamily: 'SFNSDisplay-Bold',
@@ -926,5 +929,16 @@ const styles = StyleSheet.create({
     },
     footer: {
         paddingBottom: hp(4),
+    },
+    greetingContainer: {
+        minHeight: 28,        // reserve height (adjust to your font-size/line-height)
+        justifyContent: 'center',
+        overflow: 'hidden',   // prevents visual jump
+    },
+    greetingText: {
+        fontSize: 18,         // match your actual font-size
+        lineHeight: 22,
+        fontFamily: 'SFNSDisplay-Bold',// set lineHeight to a fixed value
+
     },
 })
