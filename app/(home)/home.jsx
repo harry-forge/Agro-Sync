@@ -407,22 +407,23 @@ const Home = () => {
         });
     };
 
-    const onLogout = async () => {
-        setLoading(true);
-        const result = await logout();
-        if(result.success) {
-            router.replace('/welcome');
-            setLoading(false);
-        } else {
-            Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
-            setLoading(false);
-        }
-        setLoading(false);
-    };
+    // const onLogout = async () => {
+    //     setLoading(true);
+    //     const result = await logout();
+    //     if(result.success) {
+    //         router.replace('/welcome');
+    //         setLoading(false);
+    //     } else {
+    //         Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
+    //         setLoading(false);
+    //     }
+    //     setLoading(false);
+    // };
 
     const onProfilePress = () => {
         // Navigate to profile/settings (placeholder for now)
-        Alert.alert('Profile', 'Profile settings coming soon! 🚀');
+        // Alert.alert('Profile', 'Profile settings coming soon! 🚀');
+        router.push('/profile');
     };
 
 
@@ -643,10 +644,10 @@ const Home = () => {
                     {/* Content will be added here */}
                 </View>
 
-                {/* Temporary logout button - will be moved to profile later */}
-                <View style={styles.footer}>
-                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
-                </View>
+                {/*/!* Temporary logout button - will be moved to profile later *!/*/}
+                {/*<View style={styles.footer}>*/}
+                {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
+                {/*</View>*/}
             </View>
         </ScreenWrapper>
     )
