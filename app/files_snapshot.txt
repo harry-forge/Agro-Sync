@@ -1,0 +1,2429 @@
+app/(tabs)/_layout.jsx:
+
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
+export default function TabLayout() {
+    return (
+        <Tabs screenOptions={{ headerShown: false }}>
+            <Tabs.Screen
+                name="home"
+                options={{
+                    title: "Home",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="fields"
+                options={{
+                    title: "Fields",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="grid-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="recommendation"
+                options={{
+                    title: "Recommendation",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="star-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="help"
+                options={{
+                    title: "Help",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="help-circle-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
+}
+
+
+
+app/(tabs)/home.jsx:
+import * as Location from 'expo-location';
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import LottieView from 'lottie-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import Button from "../../components/Button";
+import ScreenWrapper from "../../components/ScreenWrapper";
+import { theme } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
+import { hp, wp } from "../../helpers/common";
+import { weatherService } from "../../services/weatherService";
+
+const Home = () => {
+    const { user, logout } = useAuth();
+    const [greeting, setGreeting] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [displayedText, setDisplayedText] = useState('');
+    const [isHindi, setIsHindi] = useState(false);
+    const [showCursor, setShowCursor] = useState(true);
+    const [weatherCondition, setWeatherCondition] = useState('sunny');
+    const [currentLottieSource, setCurrentLottieSource] = useState(require('../../assets/animations/sunny.json'));
+    const [weatherData, setWeatherData] = useState(null);
+    const [weatherLoading, setWeatherLoading] = useState(true);
+    const [location, setLocation] = useState({ latitude: null, longitude: null });
+    const lottieRef = useRef(null);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const moveUpAnim = useRef(new Animated.Value(0)).current;
+    const cursorAnim = useRef(new Animated.Value(1)).current;
+    const weatherIconAnim = useRef(new Animated.Value(1)).current;
+    const bounceAnim = useRef(new Animated.Value(1)).current;
+
+    // Get time-based greeting in both languages
+    const getGreeting = (useHindi = false) => {
+        const hour = new Date().getHours();
+
+        const greetings = {
+            english: {
+                morning: 'Good Morning',
+                afternoon: 'Good Afternoon',
+                evening: 'Good Evening',
+                night: 'Good Night'
+            },
+            hindi: {
+                morning: 'सुप्रभात',
+                afternoon: 'नमस्ते',
+                evening: 'शुभ संध्या',
+                night: 'शुभ रात्रि'
+            }
+        };
+
+        const lang = useHindi ? greetings.hindi : greetings.english;
+
+        if (hour >= 5 && hour < 12) return lang.morning;
+        if (hour >= 12 && hour < 17) return lang.afternoon;
+        if (hour >= 17 && hour < 21) return lang.evening;
+        return lang.night;
+    };
+
+    // Typing effect animation
+    const animateTypingEffect = (newText) => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(moveUpAnim, {
+                toValue: -2,
+                duration: 200,
+                useNativeDriver: true,
+            })
+        ]).start(() => {
+            // Reset displayed text and position but DO NOT set greeting yet
+            setDisplayedText('');
+            moveUpAnim.setValue(0);
+
+            // Fade in (visual only)
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+
+            const fullText = `${newText}, ${getUserName()}`;
+            let currentIndex = 0;
+
+            const typingInterval = setInterval(() => {
+                if (currentIndex <= fullText.length) {
+                    setDisplayedText(fullText.substring(0, currentIndex));
+                    currentIndex++;
+                } else {
+                    clearInterval(typingInterval);
+                    // now update greeting state (if you need it elsewhere)
+                    setGreeting(newText);
+                }
+            }, 80);
+        });
+    };
+
+
+    // Cursor blinking animation
+    useEffect(() => {
+        const blinkCursor = () => {
+            Animated.sequence([
+                Animated.timing(cursorAnim, {
+                    toValue: 0,
+                    duration: 500,
+                    useNativeDriver: false, // <-- FIXED
+                }),
+                Animated.timing(cursorAnim, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: false, // <-- FIXED
+                })
+            ]).start(() => blinkCursor());
+        };
+
+        blinkCursor();
+    }, []);
+
+    // Weather icon animation effect
+    useEffect(() => {
+        const pulseWeatherIcon = () => {
+            Animated.sequence([
+                Animated.timing(bounceAnim, {
+                    toValue: 1.1,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(bounceAnim, {
+                    toValue: 1,
+                    duration: 2000,
+                    useNativeDriver: true,
+                })
+            ]).start(() => pulseWeatherIcon());
+        };
+
+        pulseWeatherIcon();
+    }, []);
+
+    // Initialize greeting, weather and set up animations
+    useEffect(() => {
+        // Set initial greeting and start typing effect
+        const initialGreeting = getGreeting(false);
+        setGreeting(initialGreeting);
+
+        // Test API key first
+        weatherService.testApiKey();
+
+        // Get user location and fetch weather
+        getUserLocation();
+
+        // Start initial typing effect
+        setTimeout(() => {
+            animateTypingEffect(initialGreeting);
+        }, 500); // Small delay before starting
+
+        // Language animation - switch every 5 seconds (increased for typing effect)
+        const languageInterval = setInterval(() => {
+            setIsHindi(prev => {
+                const newIsHindi = !prev;
+                const newGreeting = getGreeting(newIsHindi);
+                animateTypingEffect(newGreeting);
+                return newIsHindi;
+            });
+        }, 5000); // Switch every 5 seconds to allow typing animation to complete
+
+        return () => {
+            clearInterval(languageInterval);
+        };
+    }, []);
+
+    // Fetch weather when location is available
+    useEffect(() => {
+        console.log('Location changed:', location);
+        if (location.latitude && location.longitude) {
+            console.log('Fetching weather for location:', location.latitude, location.longitude);
+            fetchWeatherData(location.latitude, location.longitude);
+
+            // Refresh weather every 10 minutes
+            const weatherInterval = setInterval(() => {
+                fetchWeatherData(location.latitude, location.longitude);
+            }, 600000); // 10 minutes
+
+            return () => clearInterval(weatherInterval);
+        } else {
+            console.log('Location not available yet');
+        }
+    }, [location]);
+
+    // Fetch weather data from API
+    const fetchWeatherData = async (lat, lon) => {
+        try {
+            setWeatherLoading(true);
+            const result = await weatherService.getCurrentWeather(lat, lon);
+
+            if (result.success) {
+                setWeatherData(result.data);
+
+                // Update animation based on real weather
+                const condition = mapWeatherCondition(result.data.current.condition.code, result.data.current.is_day);
+                setWeatherCondition(condition);
+                setCurrentLottieSource(weatherAnimations[condition] || weatherAnimations['sunny']);
+            } else {
+                console.error('Weather API error:', result.error);
+            }
+        } catch (error) {
+            console.error('Error fetching weather:', error);
+        } finally {
+            setWeatherLoading(false);
+        }
+    };
+
+    // Get user's first name
+    const getUserName = () => {
+        if (user?.user_metadata?.name) return user.user_metadata.name.split(' ')[0];
+        if (user?.name) return user.name.split(' ')[0];
+        if (user?.email) return user.email.split('@')[0];
+        return 'Friend';
+    };
+
+    // Get user's location
+    const getUserLocation = async () => {
+        try {
+            console.log('Requesting location permissions...');
+            // Request permissions
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            console.log('Location permission status:', status);
+
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied, using fallback');
+                // Fallback to a default location (New Delhi)
+                setLocation({
+                    latitude: 28.6139,
+                    longitude: 77.2090
+                });
+                return;
+            }
+
+            console.log('Getting current position...');
+            // Get current location
+            let location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+                timeout: 10000,
+            });
+
+            console.log('Got location:', location.coords.latitude, location.coords.longitude);
+            setLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+        } catch (error) {
+            console.log('Location error:', error);
+            // Fallback to a default location (New Delhi)
+            console.log('Using fallback location: New Delhi');
+            setLocation({
+                latitude: 28.6139,
+                longitude: 77.2090
+            });
+        }
+    };
+
+    // Map weather API condition codes to our animations
+    const mapWeatherCondition = (code, isDay) => {
+        const conditionMap = {
+            1000: isDay ? 'sunny' : 'clear-night', // Sunny/Clear
+            1003: 'cloudy', // Partly cloudy
+            1006: 'cloudy', // Cloudy
+            1009: 'cloudy', // Overcast
+            1030: 'cloudy', // Mist
+            1063: 'rainy', // Patchy rain possible
+            1066: 'storm', // Patchy snow possible
+            1069: 'storm', // Patchy sleet possible
+            1072: 'storm', // Patchy freezing drizzle possible
+            1087: 'storm', // Thundery outbreaks possible
+            1114: 'windy', // Blowing snow
+            1117: 'storm', // Blizzard
+            1135: 'cloudy', // Fog
+            1147: 'cloudy', // Freezing fog
+            1150: 'rainy', // Patchy light drizzle
+            1153: 'rainy', // Light drizzle
+            1168: 'rainy', // Freezing drizzle
+            1171: 'rainy', // Heavy freezing drizzle
+            1180: 'rainy', // Patchy light rain
+            1183: 'rainy', // Light rain
+            1186: 'rainy', // Moderate rain at times
+            1189: 'rainy', // Moderate rain
+            1192: 'rainy', // Heavy rain at times
+            1195: 'rainy', // Heavy rain
+            1198: 'rainy', // Light freezing rain
+            1201: 'rainy', // Moderate or heavy freezing rain
+            1204: 'storm', // Light sleet
+            1207: 'storm', // Moderate or heavy sleet
+            1210: 'storm', // Patchy light snow
+            1213: 'storm', // Light snow
+            1216: 'storm', // Patchy moderate snow
+            1219: 'storm', // Moderate snow
+            1222: 'storm', // Patchy heavy snow
+            1225: 'storm', // Heavy snow
+            1237: 'storm', // Ice pellets
+            1240: 'rainy', // Light rain shower
+            1243: 'rainy', // Moderate or heavy rain shower
+            1246: 'storm', // Torrential rain shower
+            1249: 'storm', // Light sleet showers
+            1252: 'storm', // Moderate or heavy sleet showers
+            1255: 'storm', // Light snow showers
+            1258: 'storm', // Moderate or heavy snow showers
+            1261: 'storm', // Light showers of ice pellets
+            1264: 'storm', // Moderate or heavy showers of ice pellets
+            1273: 'storm', // Patchy light rain with thunder
+            1276: 'storm', // Moderate or heavy rain with thunder
+            1279: 'storm', // Patchy light snow with thunder
+            1282: 'storm', // Moderate or heavy snow with thunder
+        };
+
+        return conditionMap[code] || (isDay ? 'sunny' : 'clear-night');
+    };
+
+    // Weather animation sources - only Lottie animations
+    const weatherAnimations = {
+        'sunny': require('../../assets/animations/sunny.json'),
+        'rainy': require('../../assets/animations/rainy.json'),
+        'rainy-night': require('../../assets/animations/rainy-night.json'),
+        'cloudy': require('../../assets/animations/clouds.json'),
+        'clear-night': require('../../assets/animations/night.json'),
+        'storm': require('../../assets/animations/storm.json'),
+        'windy': require('../../assets/animations/windy.json')
+    };
+
+    // Get weather conditions based on time and random factors - only Lottie animations
+    const getWeatherCondition = () => {
+        const hour = new Date().getHours();
+        const conditions = [];
+
+        // Time-based conditions - only using available Lottie animations
+        if (hour >= 6 && hour < 18) {
+            // Day conditions
+            conditions.push(
+                { condition: 'sunny', lottie: weatherAnimations['sunny'], weight: 4 },
+                { condition: 'cloudy', lottie: weatherAnimations['cloudy'], weight: 3 },
+                { condition: 'rainy', lottie: weatherAnimations['rainy'], weight: 2 },
+                { condition: 'windy', lottie: weatherAnimations['windy'], weight: 2 },
+                { condition: 'storm', lottie: weatherAnimations['storm'], weight: 1 },
+            );
+        } else {
+            // Night conditions
+            conditions.push(
+                { condition: 'clear-night', lottie: weatherAnimations['clear-night'], weight: 4 },
+                { condition: 'cloudy', lottie: weatherAnimations['cloudy'], weight: 3 },
+                { condition: 'rainy-night', lottie: weatherAnimations['rainy-night'], weight: 2 },
+                { condition: 'storm', lottie: weatherAnimations['storm'], weight: 1 },
+                { condition: 'windy', lottie: weatherAnimations['windy'], weight: 1 },
+            );
+        }
+
+        // Weighted random selection
+        const totalWeight = conditions.reduce((sum, c) => sum + c.weight, 0);
+        let random = Math.random() * totalWeight;
+
+        for (const condition of conditions) {
+            random -= condition.weight;
+            if (random <= 0) {
+                return condition;
+            }
+        }
+
+        return conditions[0]; // Fallback
+    };
+
+    // Animate weather icon change
+    const animateWeatherChange = (newCondition) => {
+        // Bounce and fade animation
+        Animated.sequence([
+            Animated.parallel([
+                Animated.timing(weatherIconAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(bounceAnim, {
+                    toValue: 1.2,
+                    duration: 200,
+                    useNativeDriver: true,
+                })
+            ]),
+            Animated.timing(bounceAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            })
+        ]).start(() => {
+            setWeatherCondition(newCondition.condition);
+            setCurrentLottieSource(newCondition.lottie);
+
+            // Restart Lottie animation
+            if (lottieRef.current) {
+                lottieRef.current.reset();
+                lottieRef.current.play();
+            }
+
+            Animated.timing(weatherIconAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }).start();
+        });
+    };
+
+    // const onLogout = async () => {
+    //     setLoading(true);
+    //     const result = await logout();
+    //     if(result.success) {
+    //         router.replace('/welcome');
+    //         setLoading(false);
+    //     } else {
+    //         Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
+    //         setLoading(false);
+    //     }
+    //     setLoading(false);
+    // };
+
+    const onProfilePress = () => {
+        if (!router.canGoBack()) {
+            router.push("/profile");
+        }
+    };
+
+
+
+
+    return (
+        <ScreenWrapper bg='white'>
+            <StatusBar style="dark" />
+            <View style={styles.container}>
+                {/* Header Section */}
+                <View style={styles.header}>
+                    {/* Left side - Greeting */}
+                    <View style={styles.greetingContainer}>
+                        {/* Background Autumn Plants Animation */}
+                        <View style={styles.backgroundAnimationContainer}>
+                            <LottieView
+                                source={require('../../assets/animations/autumn-plants.json')}
+                                style={styles.backgroundAnimation}
+                                autoPlay
+                                loop
+                                speed={0.5}
+                            />
+                        </View>
+
+                        <Animated.View
+                            style={[
+                                styles.greetingContainer,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: moveUpAnim }],
+                                },
+                            ]}
+                        >
+                            <Text style={styles.greetingText} numberOfLines={1} ellipsizeMode="tail" allowFontScaling={false}>
+                                {displayedText}
+                                {/* blinking cursor: use opacity from cursorAnim */}
+                                <Animated.Text style={{ opacity: cursorAnim }}>|</Animated.Text>
+                            </Text>
+                        </Animated.View>
+                        <Text style={styles.dateText}>
+                            {new Date().toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
+                        </Text>
+                    </View>
+
+                    {/* Right side - Weather & Profile */}
+                    <View style={styles.headerActions}>
+                        {/* Animated Weather Icon */}
+                        <Animated.View style={[
+                            styles.weatherContainer,
+                            {
+                                opacity: weatherIconAnim,
+                                transform: [{ scale: bounceAnim }]
+                            }
+                        ]}>
+                            {currentLottieSource && (
+                                <LottieView
+                                    ref={lottieRef}
+                                    source={currentLottieSource}
+                                    style={styles.lottieWeather}
+                                    autoPlay
+                                    loop
+                                    speed={0.8}
+                                />
+                            )}
+                        </Animated.View>
+
+                        {/* Animated Profile Icon */}
+                        <Pressable style={styles.profileButton} onPress={onProfilePress}>
+                        <LottieView
+                                source={require('../../assets/animations/user.json')}
+                                autoPlay
+                                loop
+                                style={styles.lottieProfile}
+                            />
+                        </Pressable>
+                    </View>
+                </View>
+
+                {/* Weather Section */}
+                <View style={styles.weatherSection}>
+                    {weatherLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <Text style={styles.loadingText}>Loading weather...</Text>
+                        </View>
+                    ) : weatherData ? (
+                        <View style={styles.weatherCard}>
+                            <View style={styles.weatherHeader}>
+                                <Text style={styles.locationText}>
+                                    📍 {weatherData.location.name}, {weatherData.location.country}
+                                </Text>
+                                <Text style={styles.lastUpdated}>
+                                    Updated: {new Date(weatherData.current.last_updated).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                                </Text>
+                            </View>
+
+                            <View style={styles.weatherMain}>
+                                <View style={styles.temperatureContainer}>
+                                    <Text style={styles.temperature}>
+                                        {Math.round(weatherData.current.temp_c)}°
+                                    </Text>
+                                    <View style={styles.temperatureDetails}>
+                                        <Text style={styles.condition}>
+                                            {weatherData.current.condition.text}
+                                        </Text>
+                                        <Text style={styles.feelsLike}>
+                                            Feels like {Math.round(weatherData.current.feelslike_c)}°C
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.weatherIcon}>
+                                    {currentLottieSource && (
+                                        <LottieView
+                                            source={currentLottieSource}
+                                            style={styles.weatherLottieIcon}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    )}
+                                </View>
+                            </View>
+
+                            <View style={styles.weatherDetails}>
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/clouds.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Humidity</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.humidity}%</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/windblow.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Wind</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.wind_kph} km/h</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/uv-index.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>UV Index</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.uv}</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIcon}>
+                                        <LottieView
+                                            source={require('../../assets/animations/sunny.json')}
+                                            style={styles.detailLottie}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
+                                        />
+                                    </View>
+                                    <View style={styles.detailTextGroup}>
+                                        <Text style={styles.detailLabel}>Visibility</Text>
+                                        <Text style={styles.detailValue}>{weatherData.current.vis_km} km</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={styles.weatherError}>
+                            <Text style={styles.errorText}>Unable to load weather data</Text>
+                            <Pressable
+                                style={styles.retryButton}
+                                onPress={() => {
+                                    if (location.latitude && location.longitude) {
+                                        fetchWeatherData(location.latitude, location.longitude);
+                                    } else {
+                                        getUserLocation();
+                                    }
+                                }}
+                            >
+                                <Text style={styles.retryButtonText}>Retry</Text>
+                            </Pressable>
+                        </View>
+                    )}
+                </View>
+
+                {/* Main Content Area */}
+                <View style={styles.content}>
+                    {/* Content will be added here */}
+                </View>
+
+                {/*/!* Temporary logout button - will be moved to profile later *!/*/}
+                {/*<View style={styles.footer}>*/}
+                {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
+                {/*</View>*/}
+            </View>
+        </ScreenWrapper>
+    )
+}
+export default Home
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingHorizontal: wp(5),
+        // paddingTop: hp(2),
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        paddingVertical: hp(2),
+        paddingBottom: hp(3),
+    },
+    // greetingContainer: {
+    //     flex: 1,
+    //     overflow: 'visible', // Changed to visible to show Hindi characters properly
+    //     paddingVertical: hp(1), // More padding for better animation visibility
+    //     paddingHorizontal: wp(2), // Add horizontal padding
+    //     position: 'relative', // Enable positioning for background animation
+    //     minHeight: hp(8), // Ensure enough height for the animation
+    // },
+    backgroundAnimationContainer: {
+        position: 'absolute',
+        top: -hp(1),
+        left: -wp(8), // Extended more to the left
+        right: -wp(15), // Extended to the right
+        bottom: -hp(1),
+        zIndex: 0,
+        opacity: 0.4, // Slightly more visible
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+    },
+    backgroundAnimation: {
+        width: wp(55), // Much wider to span left to right
+        height: hp(10), // Slightly taller
+        opacity: 0.7,
+    },
+    animatedTextContainer: {
+        minHeight: hp(4), // Ensure container has enough height for Hindi characters
+        justifyContent: 'center',
+        zIndex: 2, // Ensure text appears above background animation
+        position: 'relative',
+        paddingVertical: hp(0.5),
+        marginLeft: wp(1), // Slight left margin for better positioning
+    },
+    // greetingText: {
+    //     fontSize: hp(2.8),
+    //     fontFamily: 'SFNSDisplay-Bold',
+    //     color: theme.colors.textDark,
+    //     lineHeight: hp(3.8), // Increased line height for better Hindi character spacing
+    //     includeFontPadding: false, // Remove extra font padding that can clip text
+    //     textAlignVertical: 'center', // Center text vertically
+    // },
+    cursor: {
+        fontSize: hp(2.8),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.primary,
+        opacity: 0.7,
+    },
+    dateText: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+        marginTop: hp(0.5),
+        marginLeft: wp(1), // Align with greeting text
+        zIndex: 2,
+        position: 'relative',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: wp(3),
+    },
+    weatherContainer: {
+        width: wp(12),
+        height: wp(12),
+        borderRadius: wp(6),
+        backgroundColor: 'rgba(80, 200, 120, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.2)',
+    },
+
+    lottieWeather: {
+        width: wp(10),
+        height: wp(10),
+    },
+    lottieProfile: {
+        width: wp(8),
+        height: wp(8),
+    },
+    profileButton: {
+        width: wp(12),
+        height: wp(12),
+        borderRadius: wp(6),
+        backgroundColor: theme.colors.gray,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: theme.colors.dark,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    weatherSection: {
+        paddingHorizontal: wp(2),
+        paddingBottom: hp(2),
+    },
+    loadingContainer: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        padding: wp(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        minHeight: hp(20),
+    },
+    loadingText: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSText-Medium',
+        color: theme.colors.textLight,
+        marginTop: hp(1),
+    },
+    weatherCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 20,
+        padding: wp(5),
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.1)',
+    },
+    weatherHeader: {
+        marginBottom: hp(2),
+    },
+    locationText: {
+        fontSize: hp(1.9),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        marginBottom: hp(0.5),
+    },
+    lastUpdated: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+    },
+    weatherMain: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: hp(2.5),
+    },
+    temperatureContainer: {
+        flex: 1,
+    },
+    temperature: {
+        fontSize: hp(7),
+        fontFamily: 'SFNSDisplay-Heavy',
+        color: theme.colors.primary,
+        lineHeight: hp(7),
+        marginBottom: hp(0.5),
+    },
+    temperatureDetails: {
+        gap: hp(0.3),
+    },
+    condition: {
+        fontSize: hp(2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        textTransform: 'capitalize',
+    },
+    feelsLike: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+    },
+    weatherIcon: {
+        width: wp(20),
+        height: wp(20),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    weatherLottieIcon: {
+        width: wp(18),
+        height: wp(18),
+    },
+    weatherDetails: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: hp(1),
+        paddingTop: hp(2),
+        paddingHorizontal: wp(1),
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    detailItem: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: wp(20),
+        maxWidth: wp(22),
+        paddingVertical: hp(0.8),
+        paddingHorizontal: wp(1),
+    },
+    detailIcon: {
+        width: wp(10),
+        height: wp(10),
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: hp(0.3),
+    },
+    detailLottie: {
+        width: wp(8),
+        height: wp(8),
+    },
+    detailTextGroup: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: hp(0.1),
+    },
+    detailLabel: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+        marginBottom: hp(0.3),
+    },
+    detailValue: {
+        fontSize: hp(1.7),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+    },
+    weatherError: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        padding: wp(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        minHeight: hp(15),
+    },
+    errorText: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSText-Medium',
+        color: theme.colors.textLight,
+        marginBottom: hp(2),
+        textAlign: 'center',
+    },
+    retryButton: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: wp(6),
+        paddingVertical: hp(1.2),
+        borderRadius: 12,
+    },
+    retryButtonText: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: 'white',
+    },
+    content: {
+        flex: 1,
+        paddingVertical: hp(2),
+    },
+    footer: {
+        paddingBottom: hp(4),
+    },
+    greetingContainer: {
+        minHeight: 28,        // reserve height (adjust to your font-size/line-height)
+        justifyContent: 'center',
+        overflow: 'hidden',   // prevents visual jump
+    },
+    greetingText: {
+        fontSize: 18,         // match your actual font-size
+        lineHeight: 22,
+        fontFamily: 'SFNSDisplay-Bold',// set lineHeight to a fixed value
+
+    },
+})
+
+
+app/profile/index.jsx:
+
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    Image,
+    Alert,
+    ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import BackButton from "../../components/BackButton";
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserData, updateProfile, uploadAvatar } from '../../services/userService';
+import {theme} from "../../constants/theme";
+import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '../../lib/supabase';
+import { useLayoutEffect } from "react";
+import { useNavigation } from "expo-router";
+
+const Profile = () => {
+    const { user, setUserData, logout } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+    const [userData, setLocalUserData] = useState({
+        name: '',
+        email: '',
+        phoneNumber: '',
+        address: '',
+        bio: 'New user to our community! Set your bio to let people know more about you.',
+        image: null,
+        created_at: null,
+    });
+
+    // Fetch user data on component mount
+    useEffect(() => {
+        if (user?.id) {
+            fetchUserData();
+        }
+    }, [user?.id]);
+
+    const fetchUserData = async () => {
+        try {
+            setLoading(true);
+            const res = await getUserData(user.id);
+            if (res.success && res.data) {
+                setLocalUserData({
+                    name: res.data.name || 'User',
+                    email: user.email || 'xyz@email.com',
+                    phoneNumber: res.data.phoneNumber || '',
+                    address: res.data.address || '',
+                    bio: res.data.bio || 'New user to our community! Set your bio to let people know more about you.',
+                    image: res.data.image || null,
+                    created_at: res.data.created_at || null,
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            Alert.alert('Error', 'Failed to load profile data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const pickImage = async () => {
+        try {
+            // Request permission
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'We need camera roll permissions to change your profile picture');
+                return;
+            }
+
+            // Pick image
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+                await uploadImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+            Alert.alert('Error', 'Failed to pick image');
+        }
+    };
+
+    const uploadImage = async (imageUri) => {
+        try {
+            setUploading(true);
+
+            // Upload to storage
+            const uploadRes = await uploadAvatar(imageUri);
+            if (!uploadRes.success) {
+                throw new Error(uploadRes.error || 'Upload failed');
+            }
+
+            // Update user profile with new image URL
+            const updateRes = await updateProfile(user.id, { image: uploadRes.url });
+            if (!updateRes.success) {
+                throw new Error(updateRes.error || 'Update failed');
+            }
+
+            // Update local state and context
+            setLocalUserData(prev => ({ ...prev, image: uploadRes.url }));
+            setUserData({ ...user, image: uploadRes.url });
+
+            Alert.alert('Success', 'Profile picture updated successfully!');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            Alert.alert('Error', error.message || 'Failed to update profile picture');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Pick image from gallery
+    const pickFromGallery = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'We need permission to access your photos');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+                await uploadImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Gallery error:', error);
+            Alert.alert('Error', 'Failed to pick image');
+        }
+    };
+
+    // Capture image from camera
+    const pickFromCamera = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'We need camera access to take a picture');
+                return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+                await uploadImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Camera error:', error);
+            Alert.alert('Error', 'Failed to capture image');
+        }
+    };
+
+    // Remove profile photo completely
+    const removeProfilePhoto = async () => {
+        try {
+            if (!userData.image) {
+                Alert.alert('No image to remove');
+                return;
+            }
+
+            setUploading(true);
+
+            const imageUrl = userData.image;
+
+            // Extract the exact path after the bucket name `avatars/`
+            const parts = imageUrl.split('/storage/v1/object/public/avatars/');
+            const imagePath = parts.length > 1 ? parts[1] : null;
+
+            if (imagePath) {
+                const { error: deleteError } = await supabase
+                    .storage
+                    .from('avatars')
+                    .remove([imagePath]);
+
+                if (deleteError) {
+                    console.error('Supabase delete error:', deleteError);
+                    Alert.alert('Warning', 'Could not delete image from storage.');
+                } else {
+                    console.log('✅ Image deleted from Supabase:', imagePath);
+                }
+            } else {
+                console.warn('⚠️ Could not extract valid image path from URL:', imageUrl);
+            }
+
+            // Update database
+            const updateRes = await updateProfile(user.id, { image: null });
+            if (!updateRes.success) throw new Error(updateRes.error || 'Update failed');
+
+            // Update UI
+            setLocalUserData(prev => ({ ...prev, image: null }));
+            setUserData({ ...user, image: null });
+
+            Alert.alert('Removed', 'Profile photo removed successfully!');
+        } catch (error) {
+            console.error('Remove photo error:', error);
+            Alert.alert('Error', error.message || 'Failed to remove profile photo');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Dialog with all options
+    const showImageOptions = () => {
+        Alert.alert(
+            'Change Profile Photo',
+            'Select an option',
+            [
+                { text: 'Camera', onPress: pickFromCamera },
+                { text: 'Gallery', onPress: pickFromGallery },
+                { text: 'Remove Photo', onPress: removeProfilePhoto, style: 'destructive' },
+                { text: 'Cancel', style: 'cancel' },
+            ],
+            { cancelable: true }
+        );
+    };
+
+    const handleLogout = () => {
+        Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Logout',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setLoading(true);
+                        const result = await logout();
+                        if (result.success) {
+                            router.replace('/welcome');
+                        } else {
+                            Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
+                        }
+                        setLoading(false);
+                    },
+                },
+            ]
+        );
+    };
+
+
+    const menuItems = [
+        {
+            id: '1',
+            title: 'Edit Profile',
+            icon: 'person-outline',
+            onPress: () => {
+                router.push('/profile/edit');
+            },
+        },
+        {
+            id: '2',
+            title: 'Notifications',
+            icon: 'notifications-outline',
+            onPress: () => console.log('Notifications'),
+        },
+        {
+            id: '3',
+            title: 'Privacy & Security',
+            icon: 'shield-checkmark-outline',
+            onPress: () => console.log('Privacy'),
+        },
+        {
+            id: '4',
+            title: 'Help & Support',
+            icon: 'help-circle-outline',
+            onPress: () => console.log('Help'),
+        },
+        {
+            id: '5',
+            title: 'Settings',
+            icon: 'settings-outline',
+            onPress: () => console.log('Settings'),
+        },
+    ];
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#4299E1" />
+                    <Text style={styles.loadingText}>Loading profile...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+
+            {/* Header */}
+            <View style={styles.header}>
+                <BackButton router={router} />
+                <Text style={styles.headerTitle}>User Profile</Text>
+                <TouchableOpacity style={styles.settingsButton}>
+                    <Ionicons name="settings-outline" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+
+                {/* Profile Info Card */}
+                <View style={styles.profileCard}>
+                    <View style={styles.avatarContainer}>
+                        {userData.image ? (
+                            <Image
+                                style={styles.avatar}
+                                resizeMode="cover"
+                                source={{ uri: userData.image }}
+                                onError={(e) => {
+                                    console.log('Image load error:', e.nativeEvent.error);
+                                    setLocalUserData(prev => ({ ...prev, image: null }));
+                                }}
+                            />
+                        ) : (
+                            <Image
+                                style={styles.avatar}
+                                resizeMode="cover"
+                                source={require("../../assets/images/manAvatar.png")}
+                            />
+                        )}
+                        <TouchableOpacity
+                            style={styles.editAvatarButton}
+                            onPress={showImageOptions}
+                            disabled={uploading}
+                        >
+                            {uploading ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Ionicons name="camera" size={18} color="#fff" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.userInfoContainer}>
+                        <View style={styles.nameRow}>
+                            <Text style={styles.userName}>{userData.name || 'User'}</Text>
+                            <Ionicons name="checkmark-circle" size={24} color="#4299E1" style={styles.verifiedIcon} />
+                        </View>
+                        <View style={styles.emailBadge}>
+                            <Ionicons name="mail" size={12} color="#4299E1" />
+                            <Text style={styles.userEmail}>{userData.email}</Text>
+                        </View>
+                    </View>
+
+                    {/* Bio Section */}
+                    <View style={styles.bioWrapper}>
+                        <View style={styles.bioIconWrapper}>
+                            <Ionicons name="person-circle-outline" size={16} color="#4299E1" />
+                        </View>
+                        <View style={styles.bioContainer}>
+                            <Text style={styles.bioText}>{userData.bio}</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Menu Items */}
+                <View style={styles.menuContainer}>
+                    {menuItems.map((item) => (
+                        <TouchableOpacity
+                            key={item.id}
+                            style={styles.menuItem}
+                            onPress={item.onPress}
+                        >
+                            <View style={styles.menuItemLeft}>
+                                <Ionicons name={item.icon} size={24} color="#4A5568" />
+                                <Text style={styles.menuItemText}>{item.title}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#A0AEC0" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Logout Button */}
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <Ionicons name="log-out-outline" size={24} color="#E53E3E" />
+                    <Text style={styles.logoutText}>Logout</Text>
+                </TouchableOpacity>
+
+                {/* Footer */}
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>Member since {formatDate(userData.created_at)}</Text>
+                    <Text style={styles.versionText}>Version 1.0.0</Text>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#edecec',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#718096',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F3F5',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#2D3748',
+        letterSpacing: 0.3,
+    },
+    settingsButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        opacity: 0.7,
+    },
+    profileCard: {
+        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        marginTop: 20,
+        borderRadius: 20,
+        paddingTop: 32,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    avatarContainer: {
+        position: 'relative',
+        marginBottom: 20,
+    },
+    avatar: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 3,
+        borderColor: 'rgba(35,119,62,0.53)',
+    },
+    editAvatarButton: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        backgroundColor: theme.colors.primary,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#fff',
+    },
+    userInfoContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    userName: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: '#1A202C',
+        letterSpacing: -0.5,
+    },
+    verifiedIcon: {
+        marginLeft: 6,
+    },
+    emailBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#EBF5FF',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        gap: 6,
+    },
+    userEmail: {
+        fontSize: 13,
+        color: '#2B6CB0',
+        fontWeight: '600',
+    },
+    bioWrapper: {
+        width: '100%',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    bioIconWrapper: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#E8F4FD',
+        marginBottom: -16,
+        zIndex: 1,
+    },
+    bioContainer: {
+        width: '100%',
+        backgroundColor: '#FAFBFC',
+        borderRadius: 16,
+        padding: 18,
+        paddingTop: 26,
+        borderWidth: 1,
+        borderColor: '#E8EDF2',
+    },
+    bioText: {
+        fontSize: 14,
+        color: '#4A5568',
+        lineHeight: 22,
+        textAlign: 'center',
+    },
+    menuContainer: {
+        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        marginTop: 20,
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+    },
+    menuItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: '#2D3748',
+        marginLeft: 16,
+        fontWeight: '500',
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        marginTop: 20,
+        paddingVertical: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#FEB2B2',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    logoutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#E53E3E',
+        marginLeft: 12,
+    },
+    footer: {
+        alignItems: 'center',
+        paddingVertical: 24,
+        marginTop: 20,
+    },
+    footerText: {
+        fontSize: 13,
+        color: '#718096',
+        marginBottom: 4,
+    },
+    versionText: {
+        fontSize: 12,
+        color: '#A0AEC0',
+    },
+});
+
+export default Profile;
+
+app/_layout.jsx:
+import { useFonts } from 'expo-font';
+import { Stack, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
+
+// Prevent the splash screen from auto-hiding while we load the fonts
+SplashScreen.preventAutoHideAsync();
+
+const RootLayoutWithProvider = () => {
+    return(
+        <AuthProvider>
+            <MainLayout />
+        </AuthProvider>
+    )
+}
+
+export default RootLayoutWithProvider;
+// 2. MAIN LAYOUT: This is the component that uses the context.
+// It is now rendered *inside* the <AuthProvider>.
+export function MainLayout() {
+    // This call is now safe because MainLayout is a child of AuthProvider.
+    const {setAuth, setUserData} = useAuth();
+    const router = useRouter();
+
+    const [fontsLoaded, fontError] = useFonts({
+        // --- LOAD ALL YOUR FONTS HERE ---
+        'SFNSDisplay-Black': require('../assets/fonts/SFNSDisplay-Black.otf'),
+        'SFNSDisplay-Bold': require('../assets/fonts/SFNSDisplay-Bold.otf'),
+        'SFNSDisplay-Heavy': require('../assets/fonts/SFNSDisplay-Heavy.otf'),
+        'SFNSDisplay-Light': require('../assets/fonts/SFNSDisplay-Light.otf'),
+        'SFNSDisplay-Medium': require('../assets/fonts/SFNSDisplay-Medium.otf'),
+        'SFNSDisplay-Regular': require('../assets/fonts/SFNSDisplay-Regular.otf'),
+        'SFNSDisplay-Semibold': require('../assets/fonts/SFNSDisplay-Semibold.otf'),
+        'SFNSDisplay-Thin': require('../assets/fonts/SFNSDisplay-Thin.otf'),
+        'SFNSDisplay-Ultralight': require('../assets/fonts/SFNSDisplay-Ultralight.otf'),
+
+        // SFNSText Fonts
+        'SFNSText-Bold': require('../assets/fonts/SFNSText-Bold.otf'),
+        'SFNSText-BoldItalic': require('../assets/fonts/SFNSText-BoldItalic.otf'),
+        'SFNSText-BoldItalicG1': require('../assets/fonts/SFNSText-BoldItalicG1.otf'),
+        'SFNSText-BoldItalicG2': require('../assets/fonts/SFNSText-BoldItalicG2.otf'),
+        'SFNSText-BoldItalicG3': require('../assets/fonts/SFNSText-BoldItalicG3.otf'),
+        'SFNSText-BoldG1': require('../assets/fonts/SFNSText-BoldG1.otf'),
+        'SFNSText-BoldG2': require('../assets/fonts/SFNSText-BoldG2.otf'),
+        'SFNSText-BoldG3': require('../assets/fonts/SFNSText-BoldG3.otf'),
+        'SFNSText-HeavyItalic': require('../assets/fonts/SFNSText-HeavyItalic.otf'),
+        'SFNSText-LightItalic': require('../assets/fonts/SFNSText-LightItalic.otf'),
+        'SFNSText-Medium': require('../assets/fonts/SFNSText-Medium.otf'),
+        'SFNSText-MediumItalic': require('../assets/fonts/SFNSText-MediumItalic.otf'),
+        'SFNSText-Regular': require('../assets/fonts/SFNSText-Regular.otf'),
+        'SFNSText-RegularG1': require('../assets/fonts/SFNSText-RegularG1.otf'),
+        'SFNSText-RegularG2': require('../assets/fonts/SFNSText-RegularG2.otf'),
+        'SFNSText-RegularG3': require('../assets/fonts/SFNSText-RegularG3.otf'),
+        'SFNSText-RegularItalic': require('../assets/fonts/SFNSText-RegularItalic.otf'),
+        'SFNSText-RegularItalicG1': require('../assets/fonts/SFNSText-RegularItalicG1.otf'),
+        'SFNSText-RegularItalicG2': require('../assets/fonts/SFNSText-RegularItalicG2.otf'),
+        'SFNSText-RegularItalicG3': require('../assets/fonts/SFNSText-RegularItalicG3.otf'),
+        'SFNSText-Semibold': require('../assets/fonts/SFNSText-Semibold.otf'),
+        'SFNSText-SemiboldItalic': require('../assets/fonts/SFNSText-SemiboldItalic.otf'),
+        // ---------------------------------
+    });
+
+    // Authentication is now handled in the AuthContext
+
+    // Effect to hide the splash screen when loading is complete or failed.
+    useEffect(() => {
+        if (fontsLoaded || fontError) {
+            // Hides the splash screen once fonts are loaded (or if an error occurred)
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded, fontError]);
+
+    // Handle font loading error
+    useEffect(() => {
+        if (fontError) {
+            console.error(fontError);
+        }
+    }, [fontError]);
+
+    // Don't render any routes until the fonts are loaded
+    if (!fontsLoaded && !fontError) {
+        return null;
+    }
+
+    // Render the application stack
+    return (
+        <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="profile" />
+        </Stack>
+    );
+}
+
+contexts/AuthContext.js:
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { getUserData } from "../services/userService";
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({children}) => {
+    const [user, setUser] = useState(null);
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    const setAuth = authUser=>{
+        setUser(authUser);
+    }
+
+    const setUserData = userData => {
+        setUser({...userData});
+    }
+
+    const logout = async () => {
+        try {
+            const {error} = await supabase.auth.signOut();
+            if(error) {
+                console.log('Logout error:', error);
+                return {success: false, error: error.message};
+            }
+            return {success: true};
+        } catch (error) {
+            console.log('Logout error:', error);
+            return {success: false, error: 'Failed to logout'};
+        }
+    }
+
+    // Handle authentication in the context instead of the layout
+    useEffect(() => {
+        let isMounted = true;
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session)=> {
+            if (!isMounted) return;
+
+            // Only log significant events (temporarily disabled to stop spam)
+            // if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || (_event === 'INITIAL_SESSION' && !isInitialized)) {
+            //     console.log('Auth Event:', _event, 'Session User:', session?.user?.id);
+            // }
+
+            if (session && session.user) {
+                setAuth(session?.user);
+                // Get user data
+                try {
+                    const res = await getUserData(session?.user?.id);
+                    if (res.success) {
+                        setUserData({...session?.user, ...res.data});
+                    }
+                } catch (error) {
+                    console.log('Error getting user data:', error);
+                }
+            } else {
+                setAuth(null);
+            }
+
+            if (!isInitialized) {
+                setIsInitialized(true);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+            if (authListener && authListener.subscription) {
+                authListener.subscription.unsubscribe();
+            }
+        }
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{user, setAuth, setUserData, logout, isInitialized}}>
+            {children}
+        </AuthContext.Provider>
+    )
+}
+
+export const useAuth = () => useContext(AuthContext);
+
+
+
+services/userService.js:
+import { supabase } from '../lib/supabase';
+import * as FileSystem from 'expo-file-system/legacy';
+import { decode } from 'base64-arraybuffer';
+
+/**
+ * Fetches the user's profile data from the public.users table.
+ * @param {string} userId - The UUID of the authenticated user.
+ */
+export const getUserData = async (userId) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('name, image, bio, address, "phoneNumber", email, created_at')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+
+        return { success: true, data: data };
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        return { success: true, data: {} };
+    }
+}
+
+/**
+ * Handles updating fields in the public.users table.
+ * @param {string} userId - The UUID of the authenticated user.
+ * @param {object} updateFields - Object containing fields and values to update.
+ */
+export const updateProfile = async (userId, updateFields) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .update(updateFields)
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return { success: true, data: data };
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Updates user email in both auth.users and public.users
+ * @param {string} newEmail - The new email address
+ */
+export const updateEmail = async (newEmail) => {
+    try {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Update email in auth.users
+        const { error: authError } = await supabase.auth.updateUser({
+            email: newEmail
+        });
+
+        if (authError) throw authError;
+
+        // Update email in public.users
+        const { error: dbError } = await supabase
+            .from('users')
+            .update({ email: newEmail })
+            .eq('id', user.id);
+
+        if (dbError) throw dbError;
+
+        return {
+            success: true,
+            message: 'Email updated successfully. Please check your inbox for verification.'
+        };
+    } catch (error) {
+        console.error('Error updating email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Handles uploading the image file to Supabase Storage and returns the URL.
+ * NOTE: Ensure you have a storage bucket named 'avatars'.
+ */
+export const uploadAvatar = async (fileUri) => {
+    try {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 1. Prepare file path and name
+        const fileExt = fileUri.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        // 2. Read file as base64 using expo-file-system
+        const base64 = await FileSystem.readAsStringAsync(fileUri, {
+            encoding: 'base64',
+        });
+
+        // 3. Convert base64 to ArrayBuffer
+        const arrayBuffer = decode(base64);
+
+        // 4. Upload to storage
+        const { data, error } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, arrayBuffer, {
+                contentType: `image/${fileExt}`,
+                cacheControl: '3600',
+                upsert: true,
+            });
+
+        if (error) {
+            console.error('Storage upload error:', error);
+            throw error;
+        }
+
+        // 5. Get the public URL for the image
+        const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(data.path);
+
+        return { success: true, url: publicUrlData.publicUrl, path: data.path };
+    } catch (error) {
+        console.error('Error in uploadAvatar:', error);
+        return { success: false, error: error.message || 'Upload failed' };
+    }
+}
+
+/**
+ * Delete avatar from storage
+ * @param {string} imagePath - Path to the image in storage
+ */
+export const deleteAvatar = async (imagePath) => {
+    try {
+        const { error } = await supabase.storage
+            .from('avatars')
+            .remove([imagePath]);
+
+        if (error) throw error;
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting avatar:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+profile/ edit.jsx:
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserData, updateProfile } from '../../services/userService';
+import BackButton from '../../components/BackButton';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../helpers/common';
+
+const EditProfile = () => {
+    const { user, setUserData } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        bio: '',
+        phoneNumber: '',
+        address: '',
+    });
+    const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchUserData();
+        }
+    }, [user?.id]);
+
+    const fetchUserData = async () => {
+        try {
+            setLoading(true);
+            const res = await getUserData(user.id);
+            if (res.success && res.data) {
+                setFormData({
+                    name: res.data.name || '',
+                    bio: res.data.bio || '',
+                    phoneNumber: res.data.phoneNumber || '',
+                    address: res.data.address || '',
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            Alert.alert('Error', 'Failed to load profile data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.name.trim()) {
+            newErrors.name = 'Name is required';
+        } else if (formData.name.trim().length < 2) {
+            newErrors.name = 'Name must be at least 2 characters';
+        }
+
+        if (formData.phoneNumber && !/^\+?[\d\s-()]+$/.test(formData.phoneNumber)) {
+            newErrors.phoneNumber = 'Invalid phone number format';
+        }
+
+        if (formData.bio && formData.bio.length > 500) {
+            newErrors.bio = 'Bio must be less than 500 characters';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            const updateData = {
+                name: formData.name.trim(),
+                bio: formData.bio.trim() || null,
+                phoneNumber: formData.phoneNumber.trim() || null,
+                address: formData.address.trim() || null,
+            };
+
+            const res = await updateProfile(user.id, updateData);
+
+            if (res.success) {
+                // Update context with new data
+                setUserData({ ...user, ...updateData });
+
+                Alert.alert('Success', 'Profile updated successfully!', [
+                    { text: 'OK', onPress: () => router.back() }
+                ]);
+            } else {
+                Alert.alert('Error', res.error || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            Alert.alert('Error', 'An unexpected error occurred');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancel = () => {
+        Alert.alert(
+            'Discard Changes?',
+            'Are you sure you want to discard your changes?',
+            [
+                { text: 'Keep Editing', style: 'cancel' },
+                { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+            ]
+        );
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <Text style={styles.loadingText}>Loading...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.keyboardView}
+            >
+
+
+                {/* Header */}
+                <View style={styles.header}>
+                    {/* 1. Back Button (Left) */}
+                    <BackButton router={router} />
+
+                    {/* 2. Title Container (Absolute/Centered) */}
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={styles.headerTitle}>Edit Profile</Text>
+                    </View>
+
+                    {/* 3. Spacer (Right) - IMPORTANT: Must match the size of the BackButton */}
+                    {/* Assuming BackButton is about 40x40. Adjust the width if necessary. */}
+                    <View style={{ width: 40, height: 40 }} />
+                </View>
+
+
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    {/* Name Field */}
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.label}>
+                            Full Name <Text style={styles.required}>*</Text>
+                        </Text>
+                        <View style={[styles.inputWrapper, errors.name && styles.inputError]}>
+                            <Ionicons name="person-outline" size={20} color={theme.colors.textLight} />
+                            <TextInput
+                                style={styles.input}
+                                value={formData.name}
+                                onChangeText={(text) => {
+                                    setFormData({ ...formData, name: text });
+                                    if (errors.name) {
+                                        setErrors({ ...errors, name: null });
+                                    }
+                                }}
+                                placeholder="Enter your full name"
+                                placeholderTextColor={theme.colors.textLight}
+                                maxLength={50}
+                            />
+                        </View>
+                        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                    </View>
+
+                    {/* Phone Number Field */}
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.label}>Phone Number</Text>
+                        <View style={[styles.inputWrapper, errors.phoneNumber && styles.inputError]}>
+                            <Ionicons name="call-outline" size={20} color={theme.colors.textLight} />
+                            <TextInput
+                                style={styles.input}
+                                value={formData.phoneNumber}
+                                onChangeText={(text) => {
+                                    setFormData({ ...formData, phoneNumber: text });
+                                    if (errors.phoneNumber) {
+                                        setErrors({ ...errors, phoneNumber: null });
+                                    }
+                                }}
+                                placeholder="+1 234 567 8900"
+                                placeholderTextColor={theme.colors.textLight}
+                                keyboardType="phone-pad"
+                                maxLength={20}
+                            />
+                        </View>
+                        {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+                    </View>
+
+                    {/* Address Field */}
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.label}>Address</Text>
+                        <View style={styles.inputWrapper}>
+                            <Ionicons name="location-outline" size={20} color={theme.colors.textLight} />
+                            <TextInput
+                                style={styles.input}
+                                value={formData.address}
+                                onChangeText={(text) => setFormData({ ...formData, address: text })}
+                                placeholder="Enter your address"
+                                placeholderTextColor={theme.colors.textLight}
+                                maxLength={200}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Bio Field */}
+                    <View style={styles.fieldContainer}>
+                        <View style={styles.labelRow}>
+                            <Text style={styles.label}>Bio</Text>
+                            <Text style={styles.characterCount}>
+                                {formData.bio.length}/500
+                            </Text>
+                        </View>
+                        <View style={[styles.textAreaWrapper, errors.bio && styles.inputError]}>
+                            <TextInput
+                                style={styles.textArea}
+                                value={formData.bio}
+                                onChangeText={(text) => {
+                                    setFormData({ ...formData, bio: text });
+                                    if (errors.bio) {
+                                        setErrors({ ...errors, bio: null });
+                                    }
+                                }}
+                                placeholder="Tell us about yourself..."
+                                placeholderTextColor={theme.colors.textLight}
+                                multiline
+                                numberOfLines={6}
+                                textAlignVertical="top"
+                                maxLength={500}
+                            />
+                        </View>
+                        {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtons}>
+                        {/* Cancel Button */}
+                        <TouchableOpacity
+                            style={styles.cancelButtonNew}
+                            onPress={handleCancel}
+                            disabled={saving}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="close-circle-outline" size={20} color="#718096" />
+                            <Text style={styles.cancelButtonTextNew}>Cancel</Text>
+                        </TouchableOpacity>
+
+                        {/* Save Button */}
+                        <TouchableOpacity
+                            style={styles.saveMainButton}
+                            onPress={handleSave}
+                            disabled={saving}
+                            activeOpacity={0.8}
+                        >
+                            {saving ? (
+                                <View style={styles.savingContainer}>
+                                    <ActivityIndicator size="small" color="#fff" />
+                                    <Text style={styles.savingText}>Saving...</Text>
+                                </View>
+                            ) : (
+                                <View style={styles.saveButtonContent}>
+                                    <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                                    <Text style={styles.saveMainButtonText}>Save Changes</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F7FAFC',
+    },
+    keyboardView: {
+        flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#718096',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#2D3748',
+    },
+    saveButton: {
+        width: 60,
+        alignItems: 'flex-end',
+    },
+    saveButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    scrollContent: {
+        padding: 20,
+        paddingBottom: 40,
+    },
+    fieldContainer: {
+        marginBottom: 24,
+    },
+    label: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#2D3748',
+        marginBottom: 8,
+    },
+    required: {
+        color: '#E53E3E',
+    },
+    labelRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    characterCount: {
+        fontSize: 13,
+        color: '#A0AEC0',
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        gap: 12,
+    },
+    inputError: {
+        borderColor: '#FC8181',
+    },
+    input: {
+        flex: 1,
+        fontSize: 16,
+        color: '#2D3748',
+        padding: 0,
+    },
+    textAreaWrapper: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        padding: 16,
+    },
+    textArea: {
+        fontSize: 16,
+        color: '#2D3748',
+        minHeight: 120,
+        padding: 0,
+    },
+    errorText: {
+        fontSize: 13,
+        color: '#E53E3E',
+        marginTop: 6,
+        marginLeft: 4,
+    },
+    cancelButtonNew: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        paddingVertical: 16,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+        gap: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    cancelButtonTextNew: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#718096',
+    },
+    actionButtons: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+    },
+    saveMainButton: {
+        flex: 1.2,
+        backgroundColor: theme.colors.primary,
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    saveButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    saveMainButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#fff',
+        letterSpacing: 0.3,
+    },
+    savingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    savingText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
+    },
+});
+
+export default EditProfile;

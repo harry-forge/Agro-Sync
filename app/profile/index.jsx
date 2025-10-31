@@ -12,12 +12,17 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BackButton from "../../../components/BackButton";
-import { useAuth } from '../../../contexts/AuthContext';
-import { getUserData, updateProfile, uploadAvatar } from '../../../services/userService';
-import {theme} from "../../../constants/theme";
+import BackButton from "../../components/BackButton";
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserData, updateProfile, uploadAvatar } from '../../services/userService';
+import {theme} from "../../constants/theme";
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../lib/supabase';
+import { useLayoutEffect } from "react";
+import { useNavigation } from "expo-router";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 const Profile = () => {
     const { user, setUserData, logout } = useAuth();
@@ -34,11 +39,14 @@ const Profile = () => {
     });
 
     // Fetch user data on component mount
-    useEffect(() => {
-        if (user?.id) {
-            fetchUserData();
-        }
-    }, [user?.id]);
+    useFocusEffect(
+        useCallback(() => {
+            if (user?.id) {
+                fetchUserData();
+            }
+        }, [user?.id])
+    );
+
 
     const fetchUserData = async () => {
         try {
@@ -260,33 +268,31 @@ const Profile = () => {
             id: '1',
             title: 'Edit Profile',
             icon: 'person-outline',
-            onPress: () => {
-                router.push('/profile/edit');
-            },
+            onPress: () => router.push('/profile/edit'),
         },
         {
             id: '2',
             title: 'Notifications',
             icon: 'notifications-outline',
-            onPress: () => console.log('Notifications'),
+            onPress: () => Alert.alert('Coming Soon', 'Notifications feature will be available soon'),
         },
         {
             id: '3',
             title: 'Privacy & Security',
             icon: 'shield-checkmark-outline',
-            onPress: () => console.log('Privacy'),
+            onPress: () => Alert.alert('Coming Soon', 'Privacy & Security settings coming soon'),
         },
         {
             id: '4',
             title: 'Help & Support',
             icon: 'help-circle-outline',
-            onPress: () => console.log('Help'),
+            onPress: () => Alert.alert('Coming Soon', 'Help & Support will be available soon'),
         },
         {
             id: '5',
             title: 'Settings',
             icon: 'settings-outline',
-            onPress: () => console.log('Settings'),
+            onPress: () => Alert.alert('Coming Soon', 'Settings feature will be available soon'),
         },
     ];
 
@@ -314,7 +320,7 @@ const Profile = () => {
             <View style={styles.header}>
                 <BackButton router={router} />
                 <Text style={styles.headerTitle}>User Profile</Text>
-                <TouchableOpacity style={styles.settingsButton}>
+                <TouchableOpacity style={styles.settingsButton} onPress={() => Alert.alert('Coming Soon', 'In progress....')}>
                     <Ionicons name="settings-outline" size={24} color="black" />
                 </TouchableOpacity>
             </View>
@@ -338,7 +344,7 @@ const Profile = () => {
                             <Image
                                 style={styles.avatar}
                                 resizeMode="cover"
-                                source={require("../../../assets/images/manAvatar.png")}
+                                source={require("../../assets/images/manAvatar.png")}
                             />
                         )}
                         <TouchableOpacity
@@ -384,6 +390,7 @@ const Profile = () => {
                             style={styles.menuItem}
                             onPress={item.onPress}
                         >
+
                             <View style={styles.menuItemLeft}>
                                 <Ionicons name={item.icon} size={24} color="#4A5568" />
                                 <Text style={styles.menuItemText}>{item.title}</Text>

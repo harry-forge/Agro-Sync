@@ -13,7 +13,7 @@ import ScreenWrapper from "../components/ScreenWrapper";
 import { theme } from "../constants/theme";
 import { hp, wp } from "../helpers/common";
 import { supabase } from "../lib/supabase";
-// Note: useFonts and SplashScreen imports are now handled in app/_layout.js
+// Note: useFonts and SplashScreen imports are now handled in app/_layout.jsx
 
 const SignUp = () => {
     const router = useRouter();
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     natureAnimation: {
         width: wp(160),
         height: hp(20),
-        tintColor: '#2E86C1',
+        tintColor: '#4CAF50',
         resizeMode: 'stretch',
         transform: [{ scaleX: 1.5 }],
     }

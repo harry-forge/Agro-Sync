@@ -13,7 +13,7 @@ import ScreenWrapper from "../components/ScreenWrapper";
 import { theme } from "../constants/theme";
 import { hp, wp } from "../helpers/common";
 import { supabase } from "../lib/supabase";
-// Note: useFonts and SplashScreen imports are now handled in app/_layout.js
+// Note: useFonts and SplashScreen imports are now handled in app/_layout.jsx
 
 const Login = () => {
     const router = useRouter();

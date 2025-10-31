@@ -189,6 +189,14 @@ const Home = () => {
         }
     }, [location]);
 
+    // Re-run greeting when user data changes
+    useEffect(() => {
+        if (user) {
+            const newGreeting = getGreeting(isHindi);
+            animateTypingEffect(newGreeting);
+        }
+    }, [user]);
+
     // Fetch weather data from API
     const fetchWeatherData = async (lat, lon) => {
         try {
@@ -214,8 +222,8 @@ const Home = () => {
 
     // Get user's first name
     const getUserName = () => {
-        if (user?.user_metadata?.name) return user.user_metadata.name.split(' ')[0];
         if (user?.name) return user.name.split(' ')[0];
+        if (user?.user_metadata?.name) return user.user_metadata.name.split(' ')[0];
         if (user?.email) return user.email.split('@')[0];
         return 'Friend';
     };
@@ -421,10 +429,11 @@ const Home = () => {
     // };
 
     const onProfilePress = () => {
-        // Navigate to profile/settings (placeholder for now)
-        // Alert.alert('Profile', 'Profile settings coming soon! 🚀');
-        router.push('/profile');
+        if (!router.canGoBack()) {
+            router.push("/profile");
+        }
     };
+
 
 
 
@@ -495,7 +504,7 @@ const Home = () => {
 
                         {/* Animated Profile Icon */}
                         <Pressable style={styles.profileButton} onPress={onProfilePress}>
-                            <LottieView
+                        <LottieView
                                 source={require('../../assets/animations/user.json')}
                                 autoPlay
                                 loop

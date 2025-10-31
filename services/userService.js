@@ -2,9 +2,6 @@ import { supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
-// ... rest of the file
-// --- Helper Functions for Supabase Operations ---
-
 /**
  * Fetches the user's profile data from the public.users table.
  * @param {string} userId - The UUID of the authenticated user.
@@ -13,7 +10,7 @@ export const getUserData = async (userId) => {
     try {
         const { data, error } = await supabase
             .from('users')
-            .select('name, image, bio, address, "phoneNumber", created_at')
+            .select('name, image, bio, address, "phoneNumber", email, created_at')
             .eq('id', userId)
             .single();
 
@@ -50,6 +47,42 @@ export const updateProfile = async (userId, updateFields) => {
 }
 
 /**
+ * Updates user email in both auth.users and public.users
+ * @param {string} newEmail - The new email address
+ */
+export const updateEmail = async (newEmail) => {
+    try {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Update email in auth.users
+        const { error: authError } = await supabase.auth.updateUser({
+            email: newEmail
+        });
+
+        if (authError) throw authError;
+
+        // Update email in public.users
+        const { error: dbError } = await supabase
+            .from('users')
+            .update({ email: newEmail })
+            .eq('id', user.id);
+
+        if (dbError) throw dbError;
+
+        return {
+            success: true,
+            message: 'Email updated successfully. Please check your inbox for verification.'
+        };
+    } catch (error) {
+        console.error('Error updating email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Handles uploading the image file to Supabase Storage and returns the URL.
  * NOTE: Ensure you have a storage bucket named 'avatars'.
  */
@@ -66,14 +99,9 @@ export const uploadAvatar = async (fileUri) => {
         const filePath = `${user.id}/${fileName}`;
 
         // 2. Read file as base64 using expo-file-system
-
-
-        // Correct: Use the destructured/separately imported symbol.
         const base64 = await FileSystem.readAsStringAsync(fileUri, {
-            encoding: 'base64', // ✅ plain string, not EncodingType.Base64
+            encoding: 'base64',
         });
-
-
 
         // 3. Convert base64 to ArrayBuffer
         const arrayBuffer = decode(base64);
@@ -101,5 +129,24 @@ export const uploadAvatar = async (fileUri) => {
     } catch (error) {
         console.error('Error in uploadAvatar:', error);
         return { success: false, error: error.message || 'Upload failed' };
+    }
+}
+
+/**
+ * Delete avatar from storage
+ * @param {string} imagePath - Path to the image in storage
+ */
+export const deleteAvatar = async (imagePath) => {
+    try {
+        const { error } = await supabase.storage
+            .from('avatars')
+            .remove([imagePath]);
+
+        if (error) throw error;
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting avatar:', error);
+        return { success: false, error: error.message };
     }
 }

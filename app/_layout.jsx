@@ -16,10 +16,8 @@ const RootLayoutWithProvider = () => {
 }
 
 export default RootLayoutWithProvider;
-// 2. MAIN LAYOUT: This is the component that uses the context.
-// It is now rendered *inside* the <AuthProvider>.
+
 export function MainLayout() {
-    // This call is now safe because MainLayout is a child of AuthProvider.
     const {setAuth, setUserData} = useAuth();
     const router = useRouter();
 
@@ -58,31 +56,28 @@ export function MainLayout() {
         'SFNSText-RegularItalicG3': require('../assets/fonts/SFNSText-RegularItalicG3.otf'),
         'SFNSText-Semibold': require('../assets/fonts/SFNSText-Semibold.otf'),
         'SFNSText-SemiboldItalic': require('../assets/fonts/SFNSText-SemiboldItalic.otf'),
-        // ---------------------------------
     });
 
-    // Authentication is now handled in the AuthContext
-
-    // Effect to hide the splash screen when loading is complete or failed.
     useEffect(() => {
         if (fontsLoaded || fontError) {
-            // Hides the splash screen once fonts are loaded (or if an error occurred)
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded, fontError]);
 
-    // Handle font loading error
     useEffect(() => {
         if (fontError) {
             console.error(fontError);
         }
     }, [fontError]);
 
-    // Don't render any routes until the fonts are loaded
     if (!fontsLoaded && !fontError) {
         return null;
     }
 
-    // Render the application stack
-    return <Stack screenOptions={{ headerShown: false }} />;
+    return (
+        <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="profile" options={{ presentation: 'card' }} />
+        </Stack>
+    );
 }
