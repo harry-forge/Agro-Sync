@@ -3,12 +3,12 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import Button from "../../components/Button";
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { theme } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { hp, wp } from "../../helpers/common";
+import { iotService } from "../../services/iotService";
 import { weatherService } from "../../services/weatherService";
 
 const Home = () => {
@@ -23,6 +23,10 @@ const Home = () => {
     const [weatherData, setWeatherData] = useState(null);
     const [weatherLoading, setWeatherLoading] = useState(true);
     const [location, setLocation] = useState({ latitude: null, longitude: null });
+    const [iotData, setIotData] = useState(null);
+    const [iotLoading, setIotLoading] = useState(true);
+    const [lastIotUpdate, setLastIotUpdate] = useState(null);
+    const [isIotOnline, setIsIotOnline] = useState(false);
     const lottieRef = useRef(null);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const moveUpAnim = useRef(new Animated.Value(0)).current;
@@ -151,6 +155,14 @@ const Home = () => {
         // Get user location and fetch weather
         getUserLocation();
 
+        // Fetch IoT data
+        fetchIoTData();
+
+        // Refresh IoT data every 30 seconds
+        const iotInterval = setInterval(() => {
+            fetchIoTData();
+        }, 30000); // 30 seconds
+
         // Start initial typing effect
         setTimeout(() => {
             animateTypingEffect(initialGreeting);
@@ -168,6 +180,7 @@ const Home = () => {
 
         return () => {
             clearInterval(languageInterval);
+            clearInterval(iotInterval);
         };
     }, []);
 
@@ -217,6 +230,56 @@ const Home = () => {
             console.error('Error fetching weather:', error);
         } finally {
             setWeatherLoading(false);
+        }
+    };
+
+    // Fetch IoT data from API
+    const fetchIoTData = async () => {
+        try {
+            // Only show loading on initial fetch (when iotData is null)
+            if (!iotData) {
+                setIotLoading(true);
+            }
+            
+            const result = await iotService.getData();
+
+            if (result.success) {
+                const newData = result.data;
+                console.log('IoT data loaded:', newData);
+
+                // Compare timestamps to determine online/offline status
+                if (iotData) {
+                    // We have previous data, compare timestamps
+                    if (iotData.timestamp === newData.timestamp) {
+                        // Timestamp is SAME as previous - device is OFFLINE
+                        setIsIotOnline(false);
+                        console.log('IoT device OFFLINE - timestamp unchanged:', newData.timestamp);
+                    } else {
+                        // Timestamp is DIFFERENT - device is ONLINE
+                        setIsIotOnline(true);
+                        setLastIotUpdate(new Date());
+                        console.log('IoT device ONLINE - new timestamp:', newData.timestamp, '(previous:', iotData.timestamp + ')');
+                    }
+                } else {
+                    // First load, assume online
+                    setIsIotOnline(true);
+                    setLastIotUpdate(new Date());
+                    console.log('IoT device - first load, timestamp:', newData.timestamp);
+                }
+
+                setIotData(newData);
+            } else {
+                console.error('IoT API error:', result.error);
+                setIsIotOnline(false);
+            }
+        } catch (error) {
+            console.error('Error fetching IoT data:', error);
+            setIsIotOnline(false);
+        } finally {
+            // Only hide loading if it was shown (initial fetch)
+            if (!iotData) {
+                setIotLoading(false);
+            }
         }
     };
 
@@ -440,7 +503,7 @@ const Home = () => {
     return (
         <ScreenWrapper bg='white'>
             <StatusBar style="dark" />
-            <View style={styles.container}>
+            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
                 {/* Header Section */}
                 <View style={styles.header}>
                     {/* Left side - Greeting */}
@@ -648,7 +711,116 @@ const Home = () => {
                     )}
                 </View>
 
+                {/* IoT Sensors Section (single organized card) */}
+                <View style={styles.iotSection}>
+                    <Text style={styles.sectionTitle}>🌱 Smart Farm Sensors</Text>
+
+                    {iotLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <Text style={styles.loadingText}>Loading sensor data...</Text>
+                        </View>
+                    ) : iotData ? (
+                        <View style={styles.iotSingleCard}>
+                            <View style={styles.iotSingleHeader}>
+                                <Text style={styles.locationText}>🔗 Farm Sensor Hub</Text>
+                                <Text style={styles.lastUpdated}>
+                                    Updated: {lastIotUpdate 
+                                        ? lastIotUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                                        : 'Never'}
+                                </Text>
+                            </View>
+
+                            <View style={styles.iotSingleBody}>
+                                <View style={styles.iotRow}>
+                                    <View style={styles.rowLeft}>
+                                        <LottieView 
+                                            source={isIotOnline 
+                                                ? require('../../assets/animations/connection.json') 
+                                                : require('../../assets/animations/offline.json')} 
+                                            style={styles.rowIcon} 
+                                            autoPlay 
+                                            loop 
+                                            speed={0.8} 
+                                        />
+                                        <View style={styles.rowText}>
+                                            <Text style={styles.iotLabel}>System Status</Text>
+                                            <Text style={[styles.iotValue, { color: isIotOnline ? '#4CAF50' : '#F44336' }]}>
+                                                {isIotOnline ? 'Online' : 'Offline'}
+                                            </Text>
+                                            <Text style={[styles.iotStatus, { color: isIotOnline ? '#757575' : '#F44336' }]}>
+                                                {isIotOnline ? 'Connected' : 'Disconnected'}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.rowRight}>
+                                        <View style={styles.smallMetric}>
+                                            <LottieView source={require('../../assets/animations/temperature.json')} style={styles.smallIcon} autoPlay loop speed={0.8} />
+                                            <Text style={styles.smallLabel}>Temperature</Text>
+                                            <Text style={[styles.smallValue, { color: iotService.getTemperatureStatus(iotData.temperature).color }]}>{iotService.formatTemperature(iotData.temperature)}</Text>
+                                        </View>
+
+                                        <View style={styles.smallMetric}>
+                                            <LottieView source={require('../../assets/animations/clouds.json')} style={styles.smallIcon} autoPlay loop speed={0.8} />
+                                            <Text style={styles.smallLabel}>Humidity</Text>
+                                            <Text style={styles.smallValue}>{iotService.formatHumidity(iotData.humidity)}</Text>
+                                        </View>
+
+                                        <View style={styles.smallMetric}>
+                                            <LottieView source={require('../../assets/animations/Seedling.json')} style={styles.smallIcon} autoPlay loop speed={0.8} />
+                                            <Text style={styles.smallLabel}>Soil</Text>
+                                            <Text style={styles.smallValue}>{iotService.formatSoilMoisture(iotData.soil)}</Text>
+                                        </View>
+
+                                        <View style={styles.smallMetric}>
+                                            <LottieView 
+                                                source={iotData.light === 'Dark' 
+                                                    ? require('../../assets/animations/night.json') 
+                                                    : require('../../assets/animations/sunny.json')} 
+                                                style={styles.smallIcon} 
+                                                autoPlay 
+                                                loop 
+                                                speed={0.8} 
+                                            />
+                                            <Text style={styles.smallLabel}>Source</Text>
+                                            <Text style={styles.smallValue}>{iotService.formatLightLevel(iotData.light)}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={styles.iotDivider} />
+
+                                <View style={styles.iotRowBottom}>
+                                    <View style={styles.bottomItem}>
+                                        <LottieView 
+                                            source={iotService.getRainStatus(iotData.rain).status === 'No Rain' 
+                                                ? require('../../assets/animations/rainy.json') 
+                                                : require('../../assets/animations/sunny.json')} 
+                                            style={styles.smallIcon} 
+                                            autoPlay 
+                                            loop 
+                                            speed={0.8} 
+                                        />
+                                        <View style={{marginLeft: wp(3)}}>
+                                            <Text style={styles.smallLabel}>Rain</Text>
+                                            <Text style={[styles.smallValue, { color: iotService.getRainStatus(iotData.rain).color }]}>{iotService.formatRainLevel(iotData.rain)} · {iotService.getRainStatus(iotData.rain).status}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={styles.iotError}>
+                            <Text style={styles.errorText}>Unable to load sensor data</Text>
+                            <Pressable style={styles.retryButton} onPress={fetchIoTData}><Text style={styles.retryButtonText}>Retry</Text></Pressable>
+                        </View>
+                    )}
+                </View>
+
                 {/* Main Content Area */}
+                {/* spacer so user can scroll past IoT card */}
+                <View style={styles.bottomSpacer} />
                 <View style={styles.content}>
                     {/* Content will be added here */}
                 </View>
@@ -657,14 +829,14 @@ const Home = () => {
                 {/*<View style={styles.footer}>*/}
                 {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
                 {/*</View>*/}
-            </View>
+            </ScrollView>
         </ScreenWrapper>
     )
 }
 export default Home
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         paddingHorizontal: wp(5),
         // paddingTop: hp(2),
     },
@@ -915,6 +1087,44 @@ const styles = StyleSheet.create({
         elevation: 5,
         minHeight: hp(15),
     },
+    // IoT Summary Card (styled like weather card)
+    iotSummaryCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderRadius: 18,
+        padding: wp(4),
+        shadowColor: 'rgba(0, 0, 0, 0.08)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 10,
+        elevation: 4,
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.08)',
+        marginBottom: hp(1.5),
+    },
+    iotSummaryHeader: {
+        marginBottom: hp(1.2),
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    iotSummaryMain: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    iotSummaryPrimary: {
+        flex: 1,
+        paddingRight: wp(3),
+    },
+    summaryDetailItem: {
+        alignItems: 'center',
+        marginBottom: hp(0.4),
+    },
+    iotSummaryDetails: {
+        width: wp(40),
+        flexDirection: 'column',
+        justifyContent: 'center',
+    },
     errorText: {
         fontSize: hp(1.8),
         fontFamily: 'SFNSText-Medium',
@@ -950,5 +1160,174 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         fontFamily: 'SFNSDisplay-Bold',// set lineHeight to a fixed value
 
+    },
+    // IoT Section Styles
+    iotSection: {
+        paddingHorizontal: wp(2),
+        paddingBottom: hp(3),
+    },
+    sectionTitle: {
+        fontSize: hp(2.2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        marginBottom: hp(2),
+        textAlign: 'center',
+    },
+    iotGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: hp(1.5),
+    },
+    iotCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 16,
+        padding: wp(4),
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: wp(42),
+        minHeight: hp(12),
+        shadowColor: 'rgba(0, 0, 0, 0.08)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.1)',
+    },
+    deviceStatusCard: {
+        width: wp(88),
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    iotIconContainer: {
+        width: wp(12),
+        height: wp(12),
+        borderRadius: wp(6),
+        backgroundColor: 'rgba(80, 200, 120, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: wp(3),
+    },
+    iotIcon: {
+        width: wp(10),
+        height: wp(10),
+    },
+    iotContent: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    iotLabel: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+        marginBottom: hp(0.3),
+    },
+    iotValue: {
+        fontSize: hp(2.2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+        marginBottom: hp(0.2),
+    },
+    iotStatus: {
+        fontSize: hp(1.3),
+        fontFamily: 'SFNSText-Medium',
+        color: theme.colors.textLight,
+    },
+    iotError: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        padding: wp(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        minHeight: hp(15),
+    },
+    // Single organized IoT card styles
+    iotSingleCard: {
+        backgroundColor: 'rgba(255,255,255,0.98)',
+        borderRadius: 18,
+        padding: wp(4),
+        shadowColor: 'rgba(0,0,0,0.08)',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: 'rgba(80,200,120,0.08)',
+        marginBottom: hp(2),
+    },
+    iotSingleHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: hp(1),
+    },
+    iotSingleBody: {
+        // main body
+    },
+    iotRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    rowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    rowRight: {
+        width: wp(36),
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+    },
+    rowIcon: {
+        width: wp(24),
+        height: wp(24),
+        marginRight: wp(3),
+    },
+    rowText: {
+        justifyContent: 'center',
+    },
+    smallMetric: {
+        alignItems: 'center',
+        marginBottom: hp(0.6),
+    },
+    smallIcon: {
+        width: wp(8),
+        height: wp(8),
+    },
+    smallLabel: {
+        fontSize: hp(1.2),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
+    },
+    smallValue: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+    },
+    iotDivider: {
+        height: 1,
+        backgroundColor: 'rgba(0,0,0,0.04)',
+        marginVertical: hp(1.2),
+    },
+    iotRowBottom: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    bottomItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    bottomSpacer: {
+        height: hp(10),
     },
 })
