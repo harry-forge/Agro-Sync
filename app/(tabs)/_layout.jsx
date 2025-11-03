@@ -1,6 +1,6 @@
-import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, StyleSheet, Platform } from "react-native";
+import { Tabs } from "expo-router";
+import { Platform, StyleSheet, View } from "react-native";
 
 const COLORS = {
     primary: '#22C55E', // Vibrant green

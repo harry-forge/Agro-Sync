@@ -27,12 +27,19 @@ const Home = () => {
     const [iotLoading, setIotLoading] = useState(true);
     const [lastIotUpdate, setLastIotUpdate] = useState(null);
     const [isIotOnline, setIsIotOnline] = useState(false);
+    const [healthData, setHealthData] = useState(null);
+    const [healthLoading, setHealthLoading] = useState(false);
+    const [showHealthCheck, setShowHealthCheck] = useState(false);
+    const previousTimestampRef = useRef(null);
     const lottieRef = useRef(null);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const moveUpAnim = useRef(new Animated.Value(0)).current;
     const cursorAnim = useRef(new Animated.Value(1)).current;
     const weatherIconAnim = useRef(new Animated.Value(1)).current;
     const bounceAnim = useRef(new Animated.Value(1)).current;
+    const healthModalFadeAnim = useRef(new Animated.Value(0)).current;
+    const healthModalScaleAnim = useRef(new Animated.Value(0.8)).current;
+    const statusFadeAnim = useRef(new Animated.Value(1)).current;
 
     // Get time-based greeting in both languages
     const getGreeting = (useHindi = false) => {
@@ -247,26 +254,60 @@ const Home = () => {
                 const newData = result.data;
                 console.log('IoT data loaded:', newData);
 
+                // Store previous online status
+                const previousOnlineStatus = isIotOnline;
+
                 // Compare timestamps to determine online/offline status
-                if (iotData) {
+                let newOnlineStatus = false;
+                if (previousTimestampRef.current !== null) {
                     // We have previous data, compare timestamps
-                    if (iotData.timestamp === newData.timestamp) {
+                    if (previousTimestampRef.current === newData.timestamp) {
                         // Timestamp is SAME as previous - device is OFFLINE
-                        setIsIotOnline(false);
-                        console.log('IoT device OFFLINE - timestamp unchanged:', newData.timestamp);
+                        newOnlineStatus = false;
+                        console.log('IoT device OFFLINE - timestamp unchanged:', newData.timestamp, '(previous:', previousTimestampRef.current + ')');
                     } else {
                         // Timestamp is DIFFERENT - device is ONLINE
-                        setIsIotOnline(true);
+                        newOnlineStatus = true;
                         setLastIotUpdate(new Date());
-                        console.log('IoT device ONLINE - new timestamp:', newData.timestamp, '(previous:', iotData.timestamp + ')');
+                        console.log('IoT device ONLINE - new timestamp:', newData.timestamp, '(previous:', previousTimestampRef.current + ')');
                     }
                 } else {
-                    // First load, assume online
-                    setIsIotOnline(true);
-                    setLastIotUpdate(new Date());
-                    console.log('IoT device - first load, timestamp:', newData.timestamp);
+                    // First load - check if timestamp is "Never" (device offline from start)
+                    if (newData.timestamp === "Never") {
+                        newOnlineStatus = false;
+                        console.log('IoT device OFFLINE - timestamp is "Never"');
+                    } else {
+                        newOnlineStatus = true;
+                        setLastIotUpdate(new Date());
+                        console.log('IoT device ONLINE - first load, timestamp:', newData.timestamp);
+                    }
                 }
 
+                // Trigger fade animation if status changed
+                if (previousOnlineStatus !== newOnlineStatus) {
+                    // Fade out
+                    Animated.timing(statusFadeAnim, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        // Update status
+                        setIsIotOnline(newOnlineStatus);
+                        
+                        // Fade in
+                        Animated.timing(statusFadeAnim, {
+                            toValue: 1,
+                            duration: 300,
+                            useNativeDriver: true,
+                        }).start();
+                    });
+                } else {
+                    // No status change, just update
+                    setIsIotOnline(newOnlineStatus);
+                }
+
+                // Store current timestamp for next comparison
+                previousTimestampRef.current = newData.timestamp;
                 setIotData(newData);
             } else {
                 console.error('IoT API error:', result.error);
@@ -281,6 +322,103 @@ const Home = () => {
                 setIotLoading(false);
             }
         }
+    };
+
+    // Fetch health check data from API
+    const fetchHealthCheck = async () => {
+        try {
+            setHealthLoading(true);
+            setShowHealthCheck(true); // Show modal with animation immediately
+            
+            // Reset and trigger fade-in animation
+            healthModalFadeAnim.setValue(0);
+            healthModalScaleAnim.setValue(0.8);
+            
+            Animated.parallel([
+                Animated.timing(healthModalFadeAnim, {
+                    toValue: 1,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+                Animated.spring(healthModalScaleAnim, {
+                    toValue: 1,
+                    tension: 50,
+                    friction: 7,
+                    useNativeDriver: true,
+                })
+            ]).start();
+            
+            console.log('Analyzing sensor health...');
+            
+            if (!iotData) {
+                console.log('No IoT data available for health check');
+                await new Promise(resolve => setTimeout(resolve, 4000)); // Wait 4 seconds
+                setHealthData(null);
+                setHealthLoading(false);
+                return;
+            }
+
+            // Wait 4 seconds while animation plays and "checking sensors"
+            await new Promise(resolve => setTimeout(resolve, 4000));
+
+            // Generate health status based on sensor values
+            const healthStatus = {
+                temperature: analyzeTemperatureSensor(iotData.temperature),
+                humidity: analyzeHumiditySensor(iotData.humidity),
+                soil: analyzeSoilSensor(iotData.soil),
+                light: analyzeLightSensor(iotData.light),
+                rain: analyzeRainSensor(iotData.rain),
+                overall: isIotOnline ? 'System Online' : 'System Offline'
+            };
+            
+            console.log('Health check analysis:', healthStatus);
+            setHealthData(healthStatus);
+        } catch (error) {
+            console.error('Error analyzing health check:', error);
+        } finally {
+            setHealthLoading(false);
+        }
+    };
+
+    // Analyze temperature sensor health
+    const analyzeTemperatureSensor = (temp) => {
+        if (!isIotOnline || temp === 0) return 'ERROR - No Data';
+        if (temp < 0 || temp > 50) return 'WARNING - Out of Range';
+        if (temp >= 10 && temp <= 35) return 'OK - Optimal';
+        return 'OK - Acceptable';
+    };
+
+    // Analyze humidity sensor health
+    const analyzeHumiditySensor = (humidity) => {
+        if (!isIotOnline || humidity === 0) return 'ERROR - No Data';
+        if (humidity < 0 || humidity > 100) return 'WARNING - Invalid';
+        if (humidity >= 30 && humidity <= 80) return 'OK - Optimal';
+        return 'OK - Acceptable';
+    };
+
+    // Analyze soil moisture sensor health
+    const analyzeSoilSensor = (soil) => {
+        if (!isIotOnline) return 'ERROR - No Data';
+        if (soil < 0 || soil > 4095) return 'WARNING - Invalid';
+        const percentage = (soil / 4095) * 100;
+        if (percentage >= 20 && percentage <= 80) return 'OK - Optimal';
+        if (percentage < 10) return 'WARNING - Too Dry';
+        if (percentage > 90) return 'WARNING - Too Wet';
+        return 'OK - Acceptable';
+    };
+
+    // Analyze light sensor health
+    const analyzeLightSensor = (light) => {
+        if (!isIotOnline || light === 'N/A') return 'ERROR - No Data';
+        if (light === 'Dark' || light === 'Bright' || light === 'Moderate') return 'OK - Working';
+        return 'WARNING - Unknown State';
+    };
+
+    // Analyze rain sensor health
+    const analyzeRainSensor = (rain) => {
+        if (!isIotOnline || rain === 0) return 'ERROR - No Data';
+        if (rain < 0 || rain > 4095) return 'WARNING - Invalid';
+        return 'OK - Working';
     };
 
     // Get user's first name
@@ -581,7 +719,13 @@ const Home = () => {
                 <View style={styles.weatherSection}>
                     {weatherLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <LottieView
+                                source={require('../../assets/animations/loading.json')}
+                                style={styles.loadingAnimation}
+                                autoPlay
+                                loop
+                                speed={1.5}
+                            />
                             <Text style={styles.loadingText}>Loading weather...</Text>
                         </View>
                     ) : weatherData ? (
@@ -717,7 +861,13 @@ const Home = () => {
 
                     {iotLoading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <LottieView
+                                source={require('../../assets/animations/loading.json')}
+                                style={styles.loadingAnimation}
+                                autoPlay
+                                loop
+                                speed={1.5}
+                            />
                             <Text style={styles.loadingText}>Loading sensor data...</Text>
                         </View>
                     ) : iotData ? (
@@ -733,7 +883,7 @@ const Home = () => {
 
                             <View style={styles.iotSingleBody}>
                                 <View style={styles.iotRow}>
-                                    <View style={styles.rowLeft}>
+                                    <Animated.View style={[styles.rowLeft, { opacity: statusFadeAnim }]}>
                                         <LottieView 
                                             source={isIotOnline 
                                                 ? require('../../assets/animations/connection.json') 
@@ -752,7 +902,7 @@ const Home = () => {
                                                 {isIotOnline ? 'Connected' : 'Disconnected'}
                                             </Text>
                                         </View>
-                                    </View>
+                                    </Animated.View>
 
                                     <View style={styles.rowRight}>
                                         <View style={styles.smallMetric}>
@@ -794,9 +944,9 @@ const Home = () => {
                                 <View style={styles.iotRowBottom}>
                                     <View style={styles.bottomItem}>
                                         <LottieView 
-                                            source={iotService.getRainStatus(iotData.rain).status === 'No Rain' 
-                                                ? require('../../assets/animations/rainy.json') 
-                                                : require('../../assets/animations/sunny.json')} 
+                                            source={!isIotOnline || iotService.getRainStatus(iotData.rain).status === 'Clear'
+                                                ? require('../../assets/animations/sunny.json')
+                                                : require('../../assets/animations/rainy.json')} 
                                             style={styles.smallIcon} 
                                             autoPlay 
                                             loop 
@@ -804,10 +954,127 @@ const Home = () => {
                                         />
                                         <View style={{marginLeft: wp(3)}}>
                                             <Text style={styles.smallLabel}>Rain</Text>
-                                            <Text style={[styles.smallValue, { color: iotService.getRainStatus(iotData.rain).color }]}>{iotService.formatRainLevel(iotData.rain)} · {iotService.getRainStatus(iotData.rain).status}</Text>
+                                            <Text style={[styles.smallValue, { color: isIotOnline ? iotService.getRainStatus(iotData.rain).color : '#999' }]}>
+                                                {isIotOnline ? `${iotService.formatRainLevel(iotData.rain)} · ${iotService.getRainStatus(iotData.rain).status}` : 'N/A · Offline'}
+                                            </Text>
                                         </View>
                                     </View>
+
+                                    <Pressable 
+                                        style={styles.healthCheckButton} 
+                                        onPress={fetchHealthCheck}
+                                        disabled={healthLoading}
+                                    >
+                                        {healthLoading ? (
+                                            <ActivityIndicator size="small" color="#fff" />
+                                        ) : (
+                                            <Text style={styles.healthCheckButtonText}>Health Check</Text>
+                                        )}
+                                    </Pressable>
                                 </View>
+
+                                {/* Health Check Modal */}
+                                {showHealthCheck && (
+                                    <Animated.View 
+                                        style={[
+                                            styles.healthCheckModal,
+                                            {
+                                                opacity: healthModalFadeAnim,
+                                                transform: [{ scale: healthModalScaleAnim }]
+                                            }
+                                        ]}
+                                    >
+                                        <View style={styles.healthCheckHeader}>
+                                            <Text style={styles.healthCheckTitle}>
+                                                {healthLoading ? 'Analyzing Sensors...' : 'Device Health Status'}
+                                            </Text>
+                                            <Pressable onPress={() => {
+                                                setShowHealthCheck(false);
+                                                setHealthData(null);
+                                            }}>
+                                                <Text style={styles.healthCheckClose}>✕</Text>
+                                            </Pressable>
+                                        </View>
+                                        
+                                        {healthLoading ? (
+                                            <View style={styles.healthCheckLoading}>
+                                                <LottieView
+                                                    source={require('../../assets/animations/health-heart.json')}
+                                                    style={styles.healthHeartAnimation}
+                                                    autoPlay
+                                                    loop
+                                                    speed={1}
+                                                />
+                                                <Text style={styles.checkingText}>Checking Sensors</Text>
+                                                <View style={styles.sensorCheckList}>
+                                                    <Text style={styles.sensorCheckItem}>• Temperature Sensor</Text>
+                                                    <Text style={styles.sensorCheckItem}>• Humidity Sensor</Text>
+                                                    <Text style={styles.sensorCheckItem}>• Soil Moisture Sensor</Text>
+                                                    <Text style={styles.sensorCheckItem}>• Light Sensor</Text>
+                                                    <Text style={styles.sensorCheckItem}>• Rain Sensor</Text>
+                                                </View>
+                                            </View>
+                                        ) : healthData ? (
+                                            <>
+                                                {/* Overall Status */}
+                                                <View style={styles.overallStatus}>
+                                                    <Text style={styles.overallStatusLabel}>Overall System:</Text>
+                                                    <Text style={[styles.overallStatusValue, { color: isIotOnline ? '#4CAF50' : '#F44336' }]}>
+                                                        {healthData.overall}
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.healthCheckContent}>
+                                                    <View style={styles.healthItem}>
+                                                        <Text style={styles.healthLabel}>Temperature Sensor:</Text>
+                                                        <Text style={[styles.healthStatus, { 
+                                                            color: healthData.temperature.includes('OK') ? '#4CAF50' : 
+                                                                   healthData.temperature.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        }]}>
+                                                            {healthData.temperature}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.healthItem}>
+                                                        <Text style={styles.healthLabel}>Humidity Sensor:</Text>
+                                                        <Text style={[styles.healthStatus, { 
+                                                            color: healthData.humidity.includes('OK') ? '#4CAF50' : 
+                                                                   healthData.humidity.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        }]}>
+                                                            {healthData.humidity}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.healthItem}>
+                                                        <Text style={styles.healthLabel}>Soil Moisture Sensor:</Text>
+                                                        <Text style={[styles.healthStatus, { 
+                                                            color: healthData.soil.includes('OK') ? '#4CAF50' : 
+                                                                   healthData.soil.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        }]}>
+                                                            {healthData.soil}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.healthItem}>
+                                                        <Text style={styles.healthLabel}>Light Sensor:</Text>
+                                                        <Text style={[styles.healthStatus, { 
+                                                            color: healthData.light.includes('OK') ? '#4CAF50' : 
+                                                                   healthData.light.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        }]}>
+                                                            {healthData.light}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.healthItem}>
+                                                        <Text style={styles.healthLabel}>Rain Sensor:</Text>
+                                                        <Text style={[styles.healthStatus, { 
+                                                            color: healthData.rain.includes('OK') ? '#4CAF50' : 
+                                                                   healthData.rain.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        }]}>
+                                                            {healthData.rain}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </>
+                                        ) : null}
+                                    </Animated.View>
+                                )}
                             </View>
                         </View>
                     ) : (
@@ -961,6 +1228,10 @@ const styles = StyleSheet.create({
         fontFamily: 'SFNSText-Medium',
         color: theme.colors.textLight,
         marginTop: hp(1),
+    },
+    loadingAnimation: {
+        width: wp(20),
+        height: wp(20),
     },
     weatherCard: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -1329,5 +1600,112 @@ const styles = StyleSheet.create({
     },
     bottomSpacer: {
         height: hp(10),
+    },
+    healthCheckButton: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1),
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: wp(25),
+    },
+    healthCheckButtonText: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: 'white',
+    },
+    healthCheckModal: {
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderRadius: 16,
+        padding: wp(4),
+        marginTop: hp(2),
+        borderWidth: 1,
+        borderColor: 'rgba(80, 200, 120, 0.2)',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 5,
+    },
+    healthCheckHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: hp(1.5),
+        paddingBottom: hp(1),
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    healthCheckTitle: {
+        fontSize: hp(2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+    },
+    healthCheckClose: {
+        fontSize: hp(2.5),
+        color: theme.colors.textLight,
+        fontFamily: 'SFNSDisplay-Bold',
+    },
+    overallStatus: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(80, 200, 120, 0.1)',
+        padding: wp(3),
+        borderRadius: 12,
+        marginBottom: hp(1.5),
+    },
+    overallStatusLabel: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.textDark,
+    },
+    overallStatusValue: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSDisplay-Bold',
+    },
+    healthCheckContent: {
+        gap: hp(1),
+    },
+    healthItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: hp(0.8),
+    },
+    healthLabel: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textDark,
+    },
+    healthStatus: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSDisplay-Bold',
+    },
+    healthCheckLoading: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: hp(3),
+    },
+    healthHeartAnimation: {
+        width: wp(40),
+        height: wp(40),
+    },
+    checkingText: {
+        fontSize: hp(2),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: theme.colors.primary,
+        marginTop: hp(2),
+        marginBottom: hp(1.5),
+    },
+    sensorCheckList: {
+        alignItems: 'flex-start',
+        gap: hp(0.8),
+    },
+    sensorCheckItem: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSText-Regular',
+        color: theme.colors.textLight,
     },
 })
