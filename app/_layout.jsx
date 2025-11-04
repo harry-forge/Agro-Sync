@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { LocationProvider } from "../contexts/LocationContext";
 
 // Prevent the splash screen from auto-hiding while we load the fonts
 SplashScreen.preventAutoHideAsync();
@@ -10,7 +11,9 @@ SplashScreen.preventAutoHideAsync();
 const RootLayoutWithProvider = () => {
     return(
         <AuthProvider>
-            <MainLayout />
+            <LocationProvider>
+                <MainLayout />
+            </LocationProvider>
         </AuthProvider>
     )
 }

@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import LottieView from 'lottie-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Button from "../../components/Button";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { theme } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
@@ -616,23 +617,19 @@ const Home = () => {
         });
     };
 
-    // const onLogout = async () => {
-    //     setLoading(true);
-    //     const result = await logout();
-    //     if(result.success) {
-    //         router.replace('/welcome');
-    //         setLoading(false);
-    //     } else {
-    //         Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
-    //         setLoading(false);
-    //     }
-    //     setLoading(false);
-    // };
+    const onLogout = async () => {
+        setLoading(true);
+        const result = await logout();
+        if(result.success) {
+            router.replace('/welcome');
+        } else {
+            Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
+        }
+        setLoading(false);
+    };
 
     const onProfilePress = () => {
-        if (!router.canGoBack()) {
-            router.push("/profile");
-        }
+        router.push("/profile");
     };
 
 
@@ -1092,10 +1089,10 @@ const Home = () => {
                     {/* Content will be added here */}
                 </View>
 
-                {/*/!* Temporary logout button - will be moved to profile later *!/*/}
-                {/*<View style={styles.footer}>*/}
-                {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
-                {/*</View>*/}
+                {/* Temporary logout button - will be moved to profile later */}
+                <View style={styles.footer}>
+                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
+                </View>
             </ScrollView>
         </ScreenWrapper>
     )
