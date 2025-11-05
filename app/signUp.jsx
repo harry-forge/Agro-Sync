@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     natureAnimation: {
         width: wp(160),
         height: hp(20),
-        tintColor: '#4CAF50',
+        tintColor: '#2E86C1',
         resizeMode: 'stretch',
         transform: [{ scaleX: 1.5 }],
     }

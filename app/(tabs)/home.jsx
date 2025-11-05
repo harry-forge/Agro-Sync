@@ -638,79 +638,80 @@ const Home = () => {
     return (
         <ScreenWrapper bg='white'>
             <StatusBar style="dark" />
-            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-                {/* Header Section */}
-                <View style={styles.header}>
-                    {/* Left side - Greeting */}
-                    <View style={styles.greetingContainer}>
-                        {/* Background Autumn Plants Animation */}
-                        <View style={styles.backgroundAnimationContainer}>
-                            <LottieView
-                                source={require('../../assets/animations/autumn-plants.json')}
-                                style={styles.backgroundAnimation}
-                                autoPlay
-                                loop
-                                speed={0.5}
-                            />
-                        </View>
-
-                        <Animated.View
-                            style={[
-                                styles.greetingContainer,
-                                {
-                                    opacity: fadeAnim,
-                                    transform: [{ translateY: moveUpAnim }],
-                                },
-                            ]}
-                        >
-                            <Text style={styles.greetingText} numberOfLines={1} ellipsizeMode="tail" allowFontScaling={false}>
-                                {displayedText}
-                                {/* blinking cursor: use opacity from cursorAnim */}
-                                <Animated.Text style={{ opacity: cursorAnim }}>|</Animated.Text>
-                            </Text>
-                        </Animated.View>
-                        <Text style={styles.dateText}>
-                            {new Date().toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                month: 'long',
-                                day: 'numeric'
-                            })}
-                        </Text>
-                    </View>
-
-                    {/* Right side - Weather & Profile */}
-                    <View style={styles.headerActions}>
-                        {/* Animated Weather Icon */}
-                        <Animated.View style={[
-                            styles.weatherContainer,
-                            {
-                                opacity: weatherIconAnim,
-                                transform: [{ scale: bounceAnim }]
-                            }
-                        ]}>
-                            {currentLottieSource && (
-                                <LottieView
-                                    ref={lottieRef}
-                                    source={currentLottieSource}
-                                    style={styles.lottieWeather}
-                                    autoPlay
-                                    loop
-                                    speed={0.8}
-                                />
-                            )}
-                        </Animated.View>
-
-                        {/* Animated Profile Icon */}
-                        <Pressable style={styles.profileButton} onPress={onProfilePress}>
+            {/* Header Section */}
+            <View style={[styles.header, styles.container]}>
+                {/* Left side - Greeting */}
+                <View style={styles.greetingContainer}>
+                    {/* Background Autumn Plants Animation */}
+                    <View style={styles.backgroundAnimationContainer}>
                         <LottieView
-                                source={require('../../assets/animations/user.json')}
+                            source={require('../../assets/animations/autumn-plants.json')}
+                            style={styles.backgroundAnimation}
+                            autoPlay
+                            loop
+                            speed={0.5}
+                        />
+                    </View>
+
+                    <Animated.View
+                        style={[
+                            styles.greetingContainer,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: moveUpAnim }],
+                            },
+                        ]}
+                    >
+                        <Text style={styles.greetingText} numberOfLines={1} ellipsizeMode="tail" allowFontScaling={false}>
+                            {displayedText}
+                            {/* blinking cursor: use opacity from cursorAnim */}
+                            <Animated.Text style={{ opacity: cursorAnim }}>|</Animated.Text>
+                        </Text>
+                    </Animated.View>
+                    <Text style={styles.dateText}>
+                        {new Date().toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </Text>
+                </View>
+
+                {/* Right side - Weather & Profile */}
+                <View style={styles.headerActions}>
+                    {/* Animated Weather Icon */}
+                    <Animated.View style={[
+                        styles.weatherContainer,
+                        {
+                            opacity: weatherIconAnim,
+                            transform: [{ scale: bounceAnim }]
+                        }
+                    ]}>
+                        {currentLottieSource && (
+                            <LottieView
+                                ref={lottieRef}
+                                source={currentLottieSource}
+                                style={styles.lottieWeather}
                                 autoPlay
                                 loop
-                                style={styles.lottieProfile}
+                                speed={0.8}
                             />
-                        </Pressable>
-                    </View>
+                        )}
+                    </Animated.View>
+
+                    {/* Animated Profile Icon */}
+                    <Pressable style={styles.profileButton} onPress={onProfilePress}>
+                        <LottieView
+                            source={require('../../assets/animations/user.json')}
+                            autoPlay
+                            loop
+                            style={styles.lottieProfile}
+                        />
+                    </Pressable>
                 </View>
+            </View>
+            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+
 
                 {/* Weather Section */}
                 <View style={styles.weatherSection}>
@@ -1089,10 +1090,10 @@ const Home = () => {
                     {/* Content will be added here */}
                 </View>
 
-                {/* Temporary logout button - will be moved to profile later */}
-                <View style={styles.footer}>
-                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
-                </View>
+                {/*/!* Temporary logout button - will be moved to profile later *!/*/}
+                {/*<View style={styles.footer}>*/}
+                {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
+                {/*</View>*/}
             </ScrollView>
         </ScreenWrapper>
     )
@@ -1234,13 +1235,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: 20,
         padding: wp(5),
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowColor: 'rgb(2,57,18)',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 1,
         shadowRadius: 12,
-        elevation: 5,
+        elevation: 10,
         borderWidth: 1,
         borderColor: 'rgba(80, 200, 120, 0.1)',
+        marginTop: 8,
     },
     weatherHeader: {
         marginBottom: hp(2),
@@ -1360,14 +1362,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.98)',
         borderRadius: 18,
         padding: wp(4),
-        shadowColor: 'rgba(0, 0, 0, 0.08)',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 10,
-        elevation: 4,
         borderWidth: 1,
         borderColor: 'rgba(80, 200, 120, 0.08)',
         marginBottom: hp(1.5),
+        shadowColor: 'rgb(2,57,18)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 10,
     },
     iotSummaryHeader: {
         marginBottom: hp(1.2),
@@ -1433,6 +1435,7 @@ const styles = StyleSheet.create({
     iotSection: {
         paddingHorizontal: wp(2),
         paddingBottom: hp(3),
+        marginTop: 20
     },
     sectionTitle: {
         fontSize: hp(2.2),
@@ -1455,13 +1458,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: wp(42),
         minHeight: hp(12),
-        shadowColor: 'rgba(0, 0, 0, 0.08)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 1,
-        shadowRadius: 8,
-        elevation: 3,
         borderWidth: 1,
         borderColor: 'rgba(80, 200, 120, 0.1)',
+        shadowColor: 'rgb(2,57,18)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 10,
     },
     deviceStatusCard: {
         width: wp(88),
@@ -1520,14 +1523,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.98)',
         borderRadius: 18,
         padding: wp(4),
-        shadowColor: 'rgba(0,0,0,0.08)',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 1,
-        shadowRadius: 12,
-        elevation: 5,
         borderWidth: 1,
         borderColor: 'rgba(80,200,120,0.08)',
         marginBottom: hp(2),
+        shadowColor: 'rgb(2,57,18)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 10,
     },
     iotSingleHeader: {
         flexDirection: 'row',

@@ -25,7 +25,7 @@ const TabBarIcon = ({ name, color, focused }) => {
             ]}>
                 <Ionicons
                     name={name}
-                    size={focused ? 26 : 24}
+                    size={focused ? 28 : 26}
                     color={focused ? COLORS.primary : color}
                 />
             </View>
@@ -69,6 +69,7 @@ export default function TabLayout() {
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
+                    fontFamily: 'SFNSText-Bold',
                     fontWeight: '700',
                     letterSpacing: 0.5,
                     marginTop: 8,
@@ -96,7 +97,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="recommendation"
                 options={{
-                    title: "Explore",
+                    title: "Market",
                     tabBarIcon: ({ color, focused }) => (
                         <TabBarIcon
                             name={focused ? "telescope" : "telescope-outline"}
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
         transform: [{ translateY: -3 }],
     },
     iconContainer: {
-        width: 56,
+        width: 66,
         height: 42,
         justifyContent: 'center',
         alignItems: 'center',
@@ -162,13 +163,13 @@ const styles = StyleSheet.create({
                 shadowRadius: 12,
             },
             android: {
-                elevation: 3,
+                elevation: 5,
                 marginBottom: 6,
             },
         }),
     },
     activeIndicator: {
-        width: 20,
+        width: 30,
         height: 3,
         backgroundColor: COLORS.primary,
         borderRadius: 2,
