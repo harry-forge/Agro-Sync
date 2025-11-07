@@ -2,12 +2,14 @@
 class IoTService {
     constructor() {
         this.baseUrl = 'https://iot-device-backend-dguk.onrender.com';
+        // this.baseUrl = 'https://mocki.io/v1/1588969d-1261-4a66-a509-2ce3bb95bd8a';
     }
 
     async getData() {
         try {
             console.log('Fetching IoT data...');
             const response = await fetch(`${this.baseUrl}/data`, {
+            //     const response = await fetch(`${this.baseUrl}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

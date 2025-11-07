@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
+import {FieldProvider} from "../../contexts/FieldContext";
 
 const COLORS = {
     primary: '#22C55E', // Vibrant green
@@ -36,6 +37,7 @@ const TabBarIcon = ({ name, color, focused }) => {
 
 export default function TabLayout() {
     return (
+        <FieldProvider>
         <Tabs
             screenOptions={{
                 headerShown: false,
@@ -134,6 +136,7 @@ export default function TabLayout() {
                 }}
             />
         </Tabs>
+        </FieldProvider>
     );
 }
 

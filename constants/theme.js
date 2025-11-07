@@ -1,9 +1,8 @@
 export const theme = {
     colors: {
-        // Primary green tones from hills and leaves
-        primary: '#4CAF50',       // Main green from hills
-        primaryDark: '#66BB6A',   // Darker green from hills
-        primaryLight: '#81C784',  // Light green from hills
+        // Primary green tones
+        primary: '#50C878',       // Emerald green
+        primaryDark: '#00AC62',   // Darker green for buttons, hover states
 
         // Neutral colors
         dark: '#3E3E3E',          // Main dark text

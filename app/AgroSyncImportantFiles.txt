@@ -1,3 +1,5 @@
+app/(tabs)/home.jsx:
+
 import * as Location from 'expo-location';
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -248,8 +250,8 @@ const Home = () => {
             if (!iotData) {
                 setIotLoading(true);
             }
-            
-            const result = await iotService.getData();
+
+            const result = await iotService.getData();s
 
             if (result.success) {
                 const newData = result.data;
@@ -294,7 +296,7 @@ const Home = () => {
                     }).start(() => {
                         // Update status
                         setIsIotOnline(newOnlineStatus);
-                        
+
                         // Fade in
                         Animated.timing(statusFadeAnim, {
                             toValue: 1,
@@ -330,11 +332,11 @@ const Home = () => {
         try {
             setHealthLoading(true);
             setShowHealthCheck(true); // Show modal with animation immediately
-            
+
             // Reset and trigger fade-in animation
             healthModalFadeAnim.setValue(0);
             healthModalScaleAnim.setValue(0.8);
-            
+
             Animated.parallel([
                 Animated.timing(healthModalFadeAnim, {
                     toValue: 1,
@@ -348,9 +350,9 @@ const Home = () => {
                     useNativeDriver: true,
                 })
             ]).start();
-            
+
             console.log('Analyzing sensor health...');
-            
+
             if (!iotData) {
                 console.log('No IoT data available for health check');
                 await new Promise(resolve => setTimeout(resolve, 4000)); // Wait 4 seconds
@@ -371,7 +373,7 @@ const Home = () => {
                 rain: analyzeRainSensor(iotData.rain),
                 overall: isIotOnline ? 'System Online' : 'System Offline'
             };
-            
+
             console.log('Health check analysis:', healthStatus);
             setHealthData(healthStatus);
         } catch (error) {
@@ -832,23 +834,6 @@ const Home = () => {
                                         <Text style={styles.detailValue}>{weatherData.current.vis_km} km</Text>
                                     </View>
                                 </View>
-
-                                <View style={styles.detailItem}>
-                                    <View style={styles.detailIcon}>
-                                        <LottieView
-                                            source={require('../../assets/animations/rain.json')}
-                                            style={styles.detailLottie}
-                                            autoPlay
-                                            loop
-                                            speed={0.8}
-                                        />
-                                    </View>
-                                    <View style={styles.detailTextGroup}>
-                                        <Text style={styles.detailLabel}>Rainfall</Text>
-                                        <Text style={styles.detailValue}>{weatherData.current.precip_mm} mm</Text>
-                                    </View>
-                                </View>
-
                             </View>
                         </View>
                     ) : (
@@ -890,7 +875,7 @@ const Home = () => {
                             <View style={styles.iotSingleHeader}>
                                 <Text style={styles.locationText}>🔗 Farm Sensor Hub</Text>
                                 <Text style={styles.lastUpdated}>
-                                    Updated: {lastIotUpdate 
+                                    Updated: {lastIotUpdate
                                         ? lastIotUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                                         : 'Never'}
                                 </Text>
@@ -899,14 +884,14 @@ const Home = () => {
                             <View style={styles.iotSingleBody}>
                                 <View style={styles.iotRow}>
                                     <Animated.View style={[styles.rowLeft, { opacity: statusFadeAnim }]}>
-                                        <LottieView 
-                                            source={isIotOnline 
-                                                ? require('../../assets/animations/connection.json') 
-                                                : require('../../assets/animations/offline.json')} 
-                                            style={styles.rowIcon} 
-                                            autoPlay 
-                                            loop 
-                                            speed={0.8} 
+                                        <LottieView
+                                            source={isIotOnline
+                                                ? require('../../assets/animations/connection.json')
+                                                : require('../../assets/animations/offline.json')}
+                                            style={styles.rowIcon}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
                                         />
                                         <View style={styles.rowText}>
                                             <Text style={styles.iotLabel}>System Status</Text>
@@ -939,14 +924,14 @@ const Home = () => {
                                         </View>
 
                                         <View style={styles.smallMetric}>
-                                            <LottieView 
-                                                source={iotData.light === 'Dark' 
-                                                    ? require('../../assets/animations/night.json') 
-                                                    : require('../../assets/animations/sunny.json')} 
-                                                style={styles.smallIcon} 
-                                                autoPlay 
-                                                loop 
-                                                speed={0.8} 
+                                            <LottieView
+                                                source={iotData.light === 'Dark'
+                                                    ? require('../../assets/animations/night.json')
+                                                    : require('../../assets/animations/sunny.json')}
+                                                style={styles.smallIcon}
+                                                autoPlay
+                                                loop
+                                                speed={0.8}
                                             />
                                             <Text style={styles.smallLabel}>Source</Text>
                                             <Text style={styles.smallValue}>{iotService.formatLightLevel(iotData.light)}</Text>
@@ -958,14 +943,14 @@ const Home = () => {
 
                                 <View style={styles.iotRowBottom}>
                                     <View style={styles.bottomItem}>
-                                        <LottieView 
+                                        <LottieView
                                             source={!isIotOnline || iotService.getRainStatus(iotData.rain).status === 'Clear'
                                                 ? require('../../assets/animations/sunny.json')
-                                                : require('../../assets/animations/rainy.json')} 
-                                            style={styles.smallIcon} 
-                                            autoPlay 
-                                            loop 
-                                            speed={0.8} 
+                                                : require('../../assets/animations/rainy.json')}
+                                            style={styles.smallIcon}
+                                            autoPlay
+                                            loop
+                                            speed={0.8}
                                         />
                                         <View style={{marginLeft: wp(3)}}>
                                             <Text style={styles.smallLabel}>Rain</Text>
@@ -975,8 +960,8 @@ const Home = () => {
                                         </View>
                                     </View>
 
-                                    <Pressable 
-                                        style={styles.healthCheckButton} 
+                                    <Pressable
+                                        style={styles.healthCheckButton}
                                         onPress={fetchHealthCheck}
                                         disabled={healthLoading}
                                     >
@@ -990,7 +975,7 @@ const Home = () => {
 
                                 {/* Health Check Modal */}
                                 {showHealthCheck && (
-                                    <Animated.View 
+                                    <Animated.View
                                         style={[
                                             styles.healthCheckModal,
                                             {
@@ -1010,7 +995,7 @@ const Home = () => {
                                                 <Text style={styles.healthCheckClose}>✕</Text>
                                             </Pressable>
                                         </View>
-                                        
+
                                         {healthLoading ? (
                                             <View style={styles.healthCheckLoading}>
                                                 <LottieView
@@ -1042,45 +1027,45 @@ const Home = () => {
                                                 <View style={styles.healthCheckContent}>
                                                     <View style={styles.healthItem}>
                                                         <Text style={styles.healthLabel}>Temperature Sensor:</Text>
-                                                        <Text style={[styles.healthStatus, { 
-                                                            color: healthData.temperature.includes('OK') ? '#4CAF50' : 
-                                                                   healthData.temperature.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        <Text style={[styles.healthStatus, {
+                                                            color: healthData.temperature.includes('OK') ? '#4CAF50' :
+                                                                   healthData.temperature.includes('WARNING') ? '#FF9800' : '#F44336'
                                                         }]}>
                                                             {healthData.temperature}
                                                         </Text>
                                                     </View>
                                                     <View style={styles.healthItem}>
                                                         <Text style={styles.healthLabel}>Humidity Sensor:</Text>
-                                                        <Text style={[styles.healthStatus, { 
-                                                            color: healthData.humidity.includes('OK') ? '#4CAF50' : 
-                                                                   healthData.humidity.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        <Text style={[styles.healthStatus, {
+                                                            color: healthData.humidity.includes('OK') ? '#4CAF50' :
+                                                                   healthData.humidity.includes('WARNING') ? '#FF9800' : '#F44336'
                                                         }]}>
                                                             {healthData.humidity}
                                                         </Text>
                                                     </View>
                                                     <View style={styles.healthItem}>
                                                         <Text style={styles.healthLabel}>Soil Moisture Sensor:</Text>
-                                                        <Text style={[styles.healthStatus, { 
-                                                            color: healthData.soil.includes('OK') ? '#4CAF50' : 
-                                                                   healthData.soil.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        <Text style={[styles.healthStatus, {
+                                                            color: healthData.soil.includes('OK') ? '#4CAF50' :
+                                                                   healthData.soil.includes('WARNING') ? '#FF9800' : '#F44336'
                                                         }]}>
                                                             {healthData.soil}
                                                         </Text>
                                                     </View>
                                                     <View style={styles.healthItem}>
                                                         <Text style={styles.healthLabel}>Light Sensor:</Text>
-                                                        <Text style={[styles.healthStatus, { 
-                                                            color: healthData.light.includes('OK') ? '#4CAF50' : 
-                                                                   healthData.light.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        <Text style={[styles.healthStatus, {
+                                                            color: healthData.light.includes('OK') ? '#4CAF50' :
+                                                                   healthData.light.includes('WARNING') ? '#FF9800' : '#F44336'
                                                         }]}>
                                                             {healthData.light}
                                                         </Text>
                                                     </View>
                                                     <View style={styles.healthItem}>
                                                         <Text style={styles.healthLabel}>Rain Sensor:</Text>
-                                                        <Text style={[styles.healthStatus, { 
-                                                            color: healthData.rain.includes('OK') ? '#4CAF50' : 
-                                                                   healthData.rain.includes('WARNING') ? '#FF9800' : '#F44336' 
+                                                        <Text style={[styles.healthStatus, {
+                                                            color: healthData.rain.includes('OK') ? '#4CAF50' :
+                                                                   healthData.rain.includes('WARNING') ? '#FF9800' : '#F44336'
                                                         }]}>
                                                             {healthData.rain}
                                                         </Text>
@@ -1107,10 +1092,10 @@ const Home = () => {
                     {/* Content will be added here */}
                 </View>
 
-                {/* Temporary logout button - will be moved to profile later */}
-                <View style={styles.footer}>
-                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
-                </View>
+                {/*/!* Temporary logout button - will be moved to profile later *!/*/}
+                {/*<View style={styles.footer}>*/}
+                {/*    <Button loading={loading} title={'Log Out'} onPress={onLogout} />*/}
+                {/*</View>*/}
             </ScrollView>
         </ScreenWrapper>
     )
@@ -1726,3 +1711,1482 @@ const styles = StyleSheet.create({
         color: theme.colors.textLight,
     },
 })
+
+
+app/(tabs)/recommendation.jsx:
+import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from "expo-status-bar";
+import LottieView from 'lottie-react-native';
+import { useEffect, useState } from 'react';
+import {
+    FlatList,
+    Pressable,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    View
+} from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "../../constants/theme";
+import { hp, wp } from "../../helpers/common";
+import { marketPriceService } from "../../services/marketPriceService";
+
+const Recommendation = () => {
+    const [marketData, setMarketData] = useState([]);
+    const [searchResults, setSearchResults] = useState([]); // New state for search results
+    const [loading, setLoading] = useState(true);
+    const [searchLoading, setSearchLoading] = useState(false); // New loading state for search
+    const [refreshing, setRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCommodity, setSelectedCommodity] = useState('');
+    const [commodities, setCommodities] = useState([]);
+    const [isSearchMode, setIsSearchMode] = useState(false); // New state to track if we're in search mode
+
+    useEffect(() => {
+        fetchMarketData();
+        fetchCommodities();
+    }, []);
+
+    // Debounced search effect for real-time search
+    useEffect(() => {
+        if (searchQuery.trim().length === 0) {
+            setIsSearchMode(false);
+            setSearchResults([]);
+            return;
+        }
+
+        const debounceTimer = setTimeout(() => {
+            performRealTimeSearch(searchQuery);
+        }, 500); // 500ms delay for debouncing
+
+        return () => clearTimeout(debounceTimer);
+    }, [searchQuery]);
+
+    const fetchMarketData = async () => {
+        try {
+            setLoading(true);
+
+            const result = await marketPriceService.getMarketPrices({
+                limit: 50,
+                commodity: selectedCommodity
+            });
+
+            if (result.success) {
+                const formattedData = result.data.map(record =>
+                    marketPriceService.formatPriceData(record)
+                );
+                setMarketData(formattedData);
+            } else {
+                console.error('❌ Failed to fetch market data:', result.error);
+            }
+        } catch (error) {
+            console.error('💥 Error fetching market data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+
+    const fetchCommodities = async () => {
+        try {
+            const result = await marketPriceService.getCommodities();
+            if (result.success) {
+                setCommodities(result.data.slice(0, 10)); // Get first 10 commodities
+            }
+        } catch (error) {
+            console.error('Error fetching commodities:', error);
+        }
+    };
+
+    // New function for real-time search
+    const performRealTimeSearch = async (query) => {
+        if (!query || query.trim().length < 2) {
+            setIsSearchMode(false);
+            setSearchResults([]);
+            return;
+        }
+
+        try {
+            setSearchLoading(true);
+            setIsSearchMode(true);
+
+            // Try searching by different parameters
+            const searchPromises = [];
+
+            // Search by state (try both exact match and partial)
+            searchPromises.push(
+                marketPriceService.getMarketPrices({
+                    state: query,
+                    limit: 100
+                })
+            );
+
+            // Search by district
+            searchPromises.push(
+                marketPriceService.getMarketPrices({
+                    district: query,
+                    limit: 100
+                })
+            );
+
+            // Search by market
+            searchPromises.push(
+                marketPriceService.getMarketPrices({
+                    market: query,
+                    limit: 100
+                })
+            );
+
+            // Search by commodity
+            searchPromises.push(
+                marketPriceService.getMarketPrices({
+                    commodity: query,
+                    limit: 100
+                })
+            );
+
+            const results = await Promise.all(searchPromises);
+
+            // Combine all results and remove duplicates
+            const allResults = [];
+            const seenIds = new Set();
+
+            results.forEach(result => {
+                if (result.success && result.data) {
+                    result.data.forEach(record => {
+                        const id = `${record.state}-${record.district}-${record.market}-${record.commodity}-${record.variety}-${record.arrival_date}-${record.min_price}-${record.max_price}`;
+                        if (!seenIds.has(id)) {
+                            seenIds.add(id);
+                            allResults.push(marketPriceService.formatPriceData(record));
+                        }
+                    });
+                }
+            });
+
+            setSearchResults(allResults);
+
+        } catch (error) {
+            console.error('💥 Error in real-time search:', error);
+            setSearchResults([]);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        // Clear search and filters on refresh
+        setSearchQuery('');
+        setSelectedCommodity('');
+        setIsSearchMode(false);
+        setSearchResults([]);
+
+        await fetchMarketData();
+        setRefreshing(false);
+    };
+
+    const filterData = () => {
+        // If we're in search mode, use search results instead of filtering static data
+        if (isSearchMode && searchQuery.trim().length >= 2) {
+            let filteredData = searchResults;
+
+            // Apply commodity filter to search results if needed
+            if (selectedCommodity && selectedCommodity.trim()) {
+                filteredData = searchResults.filter(item =>
+                    item.commodity && item.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
+                );
+            }
+
+            return filteredData;
+        }
+
+        // Original filtering logic for when not in search mode - only market data now
+        let filteredData = marketData;
+
+        // Apply commodity filter to static data
+        if (selectedCommodity && selectedCommodity.trim()) {
+            filteredData = filteredData.filter(item =>
+                item.commodity && item.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
+            );
+        }
+
+        return filteredData;
+    };
+
+    const handleCommodityFilter = async (commodity) => {
+        if (selectedCommodity === commodity) {
+            // If same commodity is selected, clear the filter
+            setSelectedCommodity('');
+            return;
+        }
+
+        setSelectedCommodity(commodity);
+
+        // Fetch filtered data
+        setLoading(true);
+
+        const result = await marketPriceService.getMarketPrices({
+            limit: 100,
+            commodity: commodity
+        });
+
+        if (result.success) {
+            const formattedData = result.data.map(record =>
+                marketPriceService.formatPriceData(record)
+            );
+            setMarketData(formattedData);
+        }
+        setLoading(false);
+    };
+
+    const renderMarketItem = ({ item }) => (
+        <View style={styles.marketCard}>
+            <View style={styles.cardHeader}>
+                <View style={styles.commodityInfo}>
+                    <Text style={styles.commodityName}>{item.commodity}</Text>
+                    <Text style={styles.varietyText}>{item.variety}</Text>
+                </View>
+                <View style={styles.priceContainer}>
+                    <Text style={styles.modalPrice}>{item.modalPrice}</Text>
+                    <Text style={styles.priceUnit}>per {item.priceUnit}</Text>
+                </View>
+            </View>
+
+            <View style={styles.locationContainer}>
+                <Ionicons name="location-outline" size={16} color={theme.colors.textLight} />
+                <Text style={styles.locationText}>
+                    {item.market}, {item.district}, {item.state}
+                </Text>
+            </View>
+
+            <View style={styles.priceRange}>
+                <View style={styles.priceRangeItem}>
+                    <Text style={styles.priceLabel}>Min Price</Text>
+                    <Text style={styles.minPrice}>{item.minPrice}</Text>
+                </View>
+                <View style={styles.priceRangeItem}>
+                    <Text style={styles.priceLabel}>Max Price</Text>
+                    <Text style={styles.maxPrice}>{item.maxPrice}</Text>
+                </View>
+                <View style={styles.priceRangeItem}>
+                    <Text style={styles.priceLabel}>Date</Text>
+                    <Text style={styles.dateText}>{item.arrivalDate}</Text>
+                </View>
+            </View>
+        </View>
+    );
+
+    const renderCommodityFilter = ({ item }) => (
+        <Pressable
+            style={[
+                styles.commodityChip,
+                selectedCommodity === item && styles.commodityChipSelected
+            ]}
+            onPress={() => handleCommodityFilter(item)}
+        >
+            <Text style={[
+                styles.commodityChipText,
+                selectedCommodity === item && styles.commodityChipTextSelected
+            ]}>
+                {item}
+            </Text>
+        </Pressable>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <StatusBar style="dark" />
+
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <LottieView
+                        source={require('../../assets/animations/nature.json')}
+                        style={styles.headerIcon}
+                        autoPlay
+                        loop
+                        speed={0.8}
+                    />
+                    <View>
+                        <Text style={styles.headerTitle}>Market Prices</Text>
+                        <Text style={styles.headerSubtitle}>Live crop market rates</Text>
+                    </View>
+                </View>
+            </View>
+
+
+
+
+
+
+
+
+
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+                <Ionicons name="search-outline" size={20} color={theme.colors.textLight} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search crops, states, districts..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor={theme.colors.textLight}
+                />
+                {searchQuery ? (
+                    <Pressable onPress={() => setSearchQuery('')}>
+                        <Ionicons name="close-circle" size={20} color={theme.colors.textLight} />
+                    </Pressable>
+                ) : null}
+            </View>
+
+            {/* Results Counter */}
+            {(searchQuery || selectedCommodity || isSearchMode) && !searchLoading && (
+                <View style={styles.resultsContainer}>
+                    <Text style={styles.resultsText}>
+                        {filterData().length} results found
+                        {isSearchMode && searchQuery && ` for "${searchQuery}"`}
+                        {!isSearchMode && searchQuery && ` for "${searchQuery}"`}
+                        {selectedCommodity && ` in ${selectedCommodity}`}
+                        {isSearchMode && ` (live search)`}
+                    </Text>
+                </View>
+            )}
+
+            {/* Commodity Filters */}
+            <View style={styles.filtersSection}>
+                <Text style={styles.filtersTitle}>Filter by Commodity</Text>
+                <FlatList
+                    data={['', ...commodities]} // Empty string for "All" option
+                    renderItem={({ item }) => (
+                        <Pressable
+                            style={[
+                                styles.commodityChip,
+                                selectedCommodity === item && styles.commodityChipSelected
+                            ]}
+                            onPress={() => handleCommodityFilter(item)}
+                        >
+                            <Text style={[
+                                styles.commodityChipText,
+                                selectedCommodity === item && styles.commodityChipTextSelected
+                            ]}>
+                                {item || 'All'}
+                            </Text>
+                        </Pressable>
+                    )}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.commodityFilters}
+                />
+            </View>
+
+            {/* Market Data List */}
+            {searchLoading || (isSearchMode ? false : loading) ? (
+                <View style={styles.loadingContainer}>
+                    <LottieView
+                        source={require('../../assets/animations/loading.json')}
+                        style={styles.loadingAnimation}
+                        autoPlay
+                        loop
+                        speed={1.5}
+                    />
+                    <Text style={styles.loadingText}>
+                        {searchLoading
+                            ? `Searching for "${searchQuery}"...`
+                            : `Loading market prices...`
+                        }
+                    </Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={filterData()}
+                    renderItem={renderMarketItem}
+                    keyExtractor={(item, index) => `${item.state}-${item.district}-${item.market}-${item.commodity}-${item.arrivalDate}-${index}`}
+                    contentContainerStyle={styles.listContainer}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={[theme.colors.primary]}
+                        />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <LottieView
+                                source={require('../../assets/animations/nature.json')}
+                                style={styles.emptyAnimation}
+                                autoPlay
+                                loop
+                                speed={0.5}
+                            />
+                            <Text style={styles.emptyText}>
+                                {searchQuery || selectedCommodity ? 'No results found' : 'No market data available'}
+                            </Text>
+                            <Text style={styles.emptySubtext}>
+                                {searchQuery || selectedCommodity
+                                    ? `Try a different search term or clear filters`
+                                    : 'Pull down to refresh or try changing location'}
+                            </Text>
+                            {(searchQuery || selectedCommodity) && (
+                                <Pressable
+                                    style={styles.clearFiltersButton}
+                                    onPress={() => {
+                                        setSearchQuery('');
+                                        setSelectedCommodity('');
+                                    }}
+                                >
+                                    <Text style={styles.clearFiltersText}>Clear Filters</Text>
+                                </Pressable>
+                            )}
+                        </View>
+                    }
+                    showsVerticalScrollIndicator={false}
+                />
+            )}
+        </SafeAreaView>
+    );
+};
+
+export default Recommendation;
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: wp(5),
+        paddingVertical: hp(2),
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerIcon: {
+        width: wp(12),
+        height: wp(12),
+        marginRight: wp(3),
+    },
+    headerTitle: {
+        fontSize: hp(2.5),
+        fontWeight: '700',
+        color: theme.colors.textDark,
+    },
+    headerSubtitle: {
+        fontSize: hp(1.4),
+        color: theme.colors.textLight,
+        marginTop: 2,
+    },
+
+
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        marginHorizontal: wp(5),
+        marginVertical: hp(1.5),
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1.2),
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    searchInput: {
+        flex: 1,
+        marginLeft: wp(2),
+        fontSize: hp(1.8),
+        color: theme.colors.textDark,
+    },
+    filtersSection: {
+        backgroundColor: 'white',
+        paddingVertical: hp(1.5),
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    filtersTitle: {
+        fontSize: hp(1.6),
+        fontWeight: '600',
+        color: theme.colors.textDark,
+        marginLeft: wp(5),
+        marginBottom: hp(1),
+    },
+    commodityFilters: {
+        paddingHorizontal: wp(5),
+    },
+    commodityChip: {
+        backgroundColor: '#f0f0f0',
+        paddingHorizontal: wp(3),
+        paddingVertical: hp(0.8),
+        borderRadius: 20,
+        marginRight: wp(2),
+    },
+    commodityChipSelected: {
+        backgroundColor: theme.colors.primary,
+    },
+    commodityChipText: {
+        fontSize: hp(1.4),
+        color: theme.colors.textDark,
+        fontWeight: '500',
+    },
+    commodityChipTextSelected: {
+        color: 'white',
+    },
+    listContainer: {
+        padding: wp(5),
+    },
+    marketCard: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: wp(4),
+        marginBottom: hp(2),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: hp(1.5),
+    },
+    commodityInfo: {
+        flex: 1,
+    },
+    commodityName: {
+        fontSize: hp(2),
+        fontWeight: '700',
+        color: theme.colors.textDark,
+        marginBottom: 4,
+    },
+    varietyText: {
+        fontSize: hp(1.4),
+        color: theme.colors.textLight,
+    },
+    priceContainer: {
+        alignItems: 'flex-end',
+    },
+    modalPrice: {
+        fontSize: hp(2.2),
+        fontWeight: '700',
+        color: theme.colors.primary,
+    },
+    priceUnit: {
+        fontSize: hp(1.2),
+        color: theme.colors.textLight,
+        marginTop: 2,
+    },
+    locationContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: hp(1.5),
+    },
+    locationText: {
+        fontSize: hp(1.4),
+        color: theme.colors.textLight,
+        marginLeft: wp(1),
+        flex: 1,
+    },
+    priceRange: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingTop: hp(1.5),
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+    },
+    priceRangeItem: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    priceLabel: {
+        fontSize: hp(1.2),
+        color: theme.colors.textLight,
+        marginBottom: 4,
+    },
+    minPrice: {
+        fontSize: hp(1.6),
+        fontWeight: '600',
+        color: '#ff6b6b',
+    },
+    maxPrice: {
+        fontSize: hp(1.6),
+        fontWeight: '600',
+        color: '#51cf66',
+    },
+    dateText: {
+        fontSize: hp(1.4),
+        fontWeight: '500',
+        color: theme.colors.textDark,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: hp(10),
+    },
+    loadingAnimation: {
+        width: wp(20),
+        height: wp(20),
+    },
+    loadingText: {
+        fontSize: hp(1.8),
+        color: theme.colors.textLight,
+        marginTop: hp(2),
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        paddingVertical: hp(10),
+    },
+    emptyAnimation: {
+        width: wp(40),
+        height: wp(40),
+    },
+    emptyText: {
+        fontSize: hp(2),
+        fontWeight: '600',
+        color: theme.colors.textDark,
+        marginTop: hp(2),
+    },
+    emptySubtext: {
+        fontSize: hp(1.6),
+        color: theme.colors.textLight,
+        marginTop: hp(1),
+        textAlign: 'center',
+    },
+
+
+    clearFiltersButton: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: wp(6),
+        paddingVertical: hp(1.5),
+        borderRadius: wp(6),
+        marginTop: hp(2),
+    },
+    clearFiltersText: {
+        color: 'white',
+        fontSize: hp(1.6),
+        fontWeight: '600',
+    },
+    resultsContainer: {
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1),
+        backgroundColor: '#f0f8ff',
+        borderLeftWidth: 3,
+        borderLeftColor: theme.colors.primary,
+    },
+    resultsText: {
+        fontSize: hp(1.4),
+        color: theme.colors.textLight,
+        fontStyle: 'italic',
+    },
+
+});
+
+
+app/(tabs)/_layout.jsx:
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { Platform, StyleSheet, View } from "react-native";
+
+const COLORS = {
+    primary: '#22C55E', // Vibrant green
+    primaryDark: '#16A34A',
+    background: '#FFFFFF',
+    inactive: '#94A3B8',
+    activeBackground: '#DCFCE7', // Light green background
+    shadow: '#000000',
+    border: '#F1F5F9',
+};
+
+// Enhanced Tab Bar Icon Component
+const TabBarIcon = ({ name, color, focused }) => {
+    return (
+        <View style={[
+            styles.iconWrapper,
+            focused && styles.iconWrapperActive
+        ]}>
+            <View style={[
+                styles.iconContainer,
+                focused && styles.iconContainerActive
+            ]}>
+                <Ionicons
+                    name={name}
+                    size={focused ? 28 : 26}
+                    color={focused ? COLORS.primary : color}
+                />
+            </View>
+            {focused && <View style={styles.activeIndicator} />}
+        </View>
+    );
+};
+
+export default function TabLayout() {
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: COLORS.primary,
+                tabBarInactiveTintColor: COLORS.inactive,
+                tabBarStyle: {
+                    position: 'absolute',
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    backgroundColor: COLORS.background,
+                    borderRadius: 30,
+                    height: 80,
+                    paddingBottom: 15,
+                    paddingTop: 12,
+                    paddingHorizontal: 15,
+                    borderTopWidth: 0,
+                    borderWidth: 0,
+                    marginHorizontal: 15,
+                    ...Platform.select({
+                        ios: {
+                            shadowColor: COLORS.shadow,
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 25,
+                        },
+                        android: {
+                            elevation: 15,
+                        },
+                    }),
+                },
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontFamily: 'SFNSText-Bold',
+                    fontWeight: '700',
+                    letterSpacing: 0.5,
+                    marginTop: 8,
+                },
+                tabBarItemStyle: {
+                    paddingVertical: 5,
+                },
+                tabBarShowLabel: true,
+                tabBarHideOnKeyboard: true,
+            }}
+        >
+            <Tabs.Screen
+                name="home"
+                options={{
+                    title: "Home",
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabBarIcon
+                            name={focused ? "home" : "home-outline"}
+                            color={color}
+                            focused={focused}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="recommendation"
+                options={{
+                    title: "Market",
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabBarIcon
+                            name={focused ? "telescope" : "telescope-outline"}
+                            color={color}
+                            focused={focused}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="fields"
+                options={{
+                    title: "Fields",
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabBarIcon
+                            name={focused ? "leaf" : "leaf-outline"}
+                            color={color}
+                            focused={focused}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="help"
+                options={{
+                    title: "Help",
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabBarIcon
+                            name={focused ? "compass" : "compass-outline"}
+                            color={color}
+                            focused={focused}
+                        />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
+}
+
+const styles = StyleSheet.create({
+    iconWrapper: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconWrapperActive: {
+        transform: [{ translateY: -3 }],
+    },
+    iconContainer: {
+        width: 66,
+        height: 42,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 18,
+        backgroundColor: 'transparent',
+    },
+    iconContainerActive: {
+        backgroundColor: COLORS.activeBackground,
+        ...Platform.select({
+            ios: {
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 12,
+            },
+            android: {
+                elevation: 5,
+                marginBottom: 6,
+            },
+        }),
+    },
+    activeIndicator: {
+        width: 30,
+        height: 3,
+        backgroundColor: COLORS.primary,
+        borderRadius: 2,
+        marginTop: 6,
+        marginBottom: -14,
+        position: 'absolute',
+        bottom: -10,
+    },
+});
+
+
+
+services/iotService.js:
+// IoT Device Service
+class IoTService {
+    constructor() {
+        this.baseUrl = 'https://iot-device-backend-dguk.onrender.com';
+    }
+
+    async getData() {
+        try {
+            console.log('Fetching IoT data...');
+            const response = await fetch(`${this.baseUrl}/data`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('IoT Data Response:', data);
+
+            return {
+                success: true,
+                data: data
+            };
+        } catch (error) {
+            console.error('IoT Service Error:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to fetch IoT data'
+            };
+        }
+    }
+
+    // Helper methods to format data
+    formatTemperature(temp) {
+        return `${Math.round(temp)}°C`;
+    }
+
+    formatHumidity(humidity) {
+        return `${Math.round(humidity)}%`;
+    }
+
+    formatSoilMoisture(soil) {
+        // Convert soil sensor reading to percentage (0-4095 range)
+        const percentage = Math.round((soil / 4095) * 100);
+        return `${percentage}%`;
+    }
+
+    formatLightLevel(light) {
+        return light || 'Unknown';
+    }
+
+    formatRainLevel(rain) {
+        // Rain sensor: higher values typically mean less rain
+        if (rain > 3500) return 'No Rain';
+        if (rain > 2500) return 'Light Rain';
+        if (rain > 1500) return 'Moderate Rain';
+        return 'Heavy Rain';
+    }
+
+    // Get sensor status colors
+    getTemperatureStatus(temp) {
+        if (temp < 10) return { status: 'Cold', color: '#64B5F6' };
+        if (temp < 25) return { status: 'Optimal', color: '#4CAF50' };
+        if (temp < 35) return { status: 'Warm', color: '#FF9800' };
+        return { status: 'Hot', color: '#F44336' };
+    }
+
+    getHumidityStatus(humidity) {
+        if (humidity < 30) return { status: 'Low', color: '#FF9800' };
+        if (humidity < 70) return { status: 'Optimal', color: '#4CAF50' };
+        return { status: 'High', color: '#2196F3' };
+    }
+
+    getSoilMoistureStatus(soil) {
+        const percentage = (soil / 4095) * 100;
+        if (percentage < 20) return { status: 'Dry', color: '#F44336' };
+        if (percentage < 60) return { status: 'Optimal', color: '#4CAF50' };
+        return { status: 'Wet', color: '#2196F3' };
+    }
+
+    getLightStatus(light) {
+        const status = light?.toLowerCase() || 'unknown';
+        switch (status) {
+            case 'bright':
+                return { status: 'Bright', color: '#FFD54F' };
+            case 'moderate':
+                return { status: 'Moderate', color: '#FFA726' };
+            case 'dark':
+                return { status: 'Dark', color: '#90A4AE' };
+            default:
+                return { status: 'Unknown', color: '#BDBDBD' };
+        }
+    }
+
+    getRainStatus(rain) {
+        if (rain > 3500) return { status: 'Clear', color: '#4CAF50' };
+        if (rain > 2500) return { status: 'Light Rain', color: '#2196F3' };
+        if (rain > 1500) return { status: 'Moderate Rain', color: '#FF9800' };
+        return { status: 'Heavy Rain', color: '#F44336' };
+    }
+}
+
+export const iotService = new IoTService();
+
+
+services/marketPriceService.js:
+const API_BASE_URL = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
+const API_KEY = '579b464db66ec23bdd000001bc96414976a7475e48eb5efbbb1c9496';
+
+class MarketPriceService {
+    constructor() {
+        this.apiKey = API_KEY;
+        this.baseUrl = API_BASE_URL;
+    }
+
+    // Get market prices for crops
+    async getMarketPrices(params = {}) {
+        try {
+            const {
+                limit = 200,  // Increased from 10 to 200 for better geographic coverage
+                offset = 0,
+                state = '',
+                district = '',
+                market = '',
+                commodity = ''
+            } = params;
+
+            const queryParams = new URLSearchParams({
+                'api-key': this.apiKey,
+                format: 'json',
+                limit: limit.toString(),
+                offset: offset.toString()
+            });
+
+            // Add optional filters
+            if (state) queryParams.append('filters[state]', state);
+            if (district) queryParams.append('filters[district]', district);
+            if (market) queryParams.append('filters[market]', market);
+            if (commodity) queryParams.append('filters[commodity]', commodity);
+
+            const url = `${this.baseUrl}?${queryParams.toString()}`;
+            console.log('🌐 Fetching market prices from:', url);
+            console.log('📋 Request params:', { limit, offset, state, district, market, commodity });
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                console.error('❌ HTTP Error:', response.status, response.statusText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📡 Market price API response:', {
+                recordsCount: data.records?.length || 0,
+                total: data.total || 0,
+                count: data.count || 0,
+                firstRecord: data.records?.[0],
+                error: data.error
+            });
+
+            return {
+                success: true,
+                data: data.records || [],
+                total: data.total || 0,
+                count: data.count || 0
+            };
+
+        } catch (error) {
+            console.error('Market price API error:', error);
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
+
+    // Get unique states from the data
+    async getStates() {
+        try {
+            const result = await this.getMarketPrices({ limit: 500 });
+            if (result.success) {
+                const states = [...new Set(result.data.map(item => item.state))].filter(Boolean);
+                console.log('Available states in API:', states);
+                return { success: true, data: states.sort() };
+            }
+            return { success: false, data: [] };
+        } catch (error) {
+            console.error('Error fetching states:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    // Get unique districts from the data
+    async getDistricts() {
+        try {
+            const result = await this.getMarketPrices({ limit: 200 });
+            if (result.success) {
+                const districts = [...new Set(result.data.map(item => item.district))].filter(Boolean);
+                console.log('Available districts in API:', districts.slice(0, 10));
+                return { success: true, data: districts.sort() };
+            }
+            return { success: false, data: [] };
+        } catch (error) {
+            console.error('Error fetching districts:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    // Find best matching location from API data
+    findBestLocationMatch(userLocation, availableLocations) {
+        if (!userLocation || !availableLocations) return null;
+
+        const userLoc = userLocation.toLowerCase().trim();
+
+        // Exact match first
+        const exactMatch = availableLocations.find(loc =>
+            loc.toLowerCase().trim() === userLoc
+        );
+        if (exactMatch) return exactMatch;
+
+        // Partial match
+        const partialMatch = availableLocations.find(loc =>
+            loc.toLowerCase().includes(userLoc) || userLoc.includes(loc.toLowerCase())
+        );
+        if (partialMatch) return partialMatch;
+
+        // Fuzzy match (first few characters)
+        const fuzzyMatch = availableLocations.find(loc => {
+            const locLower = loc.toLowerCase().trim();
+            return locLower.startsWith(userLoc.substring(0, 3)) ||
+                   userLoc.startsWith(locLower.substring(0, 3));
+        });
+
+        return fuzzyMatch || null;
+    }
+
+    // Get unique commodities from the data
+    async getCommodities() {
+        try {
+            const result = await this.getMarketPrices({ limit: 100 });
+            if (result.success) {
+                const commodities = [...new Set(result.data.map(item => item.commodity))].filter(Boolean);
+                return { success: true, data: commodities.sort() };
+            }
+            return { success: false, data: [] };
+        } catch (error) {
+            console.error('Error fetching commodities:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    // Format price data for display
+    formatPriceData(record) {
+        return {
+            id: `${record.state}_${record.district}_${record.market}_${record.commodity}_${record.arrival_date}`,
+            commodity: record.commodity || 'N/A',
+            variety: record.variety || 'N/A',
+            state: record.state || 'N/A',
+            district: record.district || 'N/A',
+            market: record.market || 'N/A',
+            arrivalDate: record.arrival_date || 'N/A',
+            minPrice: record.min_price ? `₹${record.min_price}` : 'N/A',
+            maxPrice: record.max_price ? `₹${record.max_price}` : 'N/A',
+            modalPrice: record.modal_price ? `₹${record.modal_price}` : 'N/A',
+            priceUnit: record.price_unit || 'Quintal'
+        };
+    }
+
+    // Get price trend for a specific commodity
+    async getPriceTrend(commodity, limit = 20) {
+        try {
+            const result = await this.getMarketPrices({
+                commodity: commodity,
+                limit: limit
+            });
+
+            if (result.success) {
+                const formattedData = result.data.map(record => this.formatPriceData(record));
+                return { success: true, data: formattedData };
+            }
+
+            return { success: false, data: [] };
+        } catch (error) {
+            console.error('Error fetching price trend:', error);
+            return { success: false, data: [] };
+        }
+    }
+
+    // Get market prices near user's location with improved matching
+    async getNearbyMarketPrices(locationInfo, limit = 20) {
+        try {
+            console.log('User location info:', locationInfo);
+
+            if (!locationInfo) {
+                console.log('No location info, fetching general market prices');
+                return await this.getMarketPrices({ limit });
+            }
+
+            let result;
+            let isLocal = false;
+            let matchedLocation = null;
+
+            // Get available states and districts for matching
+            const statesResult = await this.getStates();
+            const districtsResult = await this.getDistricts();
+
+            // Try to match user's state with available states
+            if (locationInfo.state && statesResult.success) {
+                matchedLocation = this.findBestLocationMatch(locationInfo.state, statesResult.data);
+
+                if (matchedLocation) {
+                    console.log(`Matched user state "${locationInfo.state}" with API state "${matchedLocation}"`);
+                    result = await this.getMarketPrices({
+                        state: matchedLocation,
+                        limit: limit
+                    });
+
+                    if (result.success && result.data.length > 0) {
+                        console.log(`Found ${result.data.length} markets in state: ${matchedLocation}`);
+                        isLocal = true;
+                    }
+                } else {
+                    console.log(`No matching state found for "${locationInfo.state}"`);
+                    console.log('Available states sample:', statesResult.data.slice(0, 5));
+                }
+            }
+
+            // If no state match, try district matching
+            if ((!result || !result.success || result.data.length === 0) && locationInfo.district && districtsResult.success) {
+                matchedLocation = this.findBestLocationMatch(locationInfo.district, districtsResult.data);
+
+                if (matchedLocation) {
+                    console.log(`Matched user district "${locationInfo.district}" with API district "${matchedLocation}"`);
+                    result = await this.getMarketPrices({
+                        district: matchedLocation,
+                        limit: limit
+                    });
+
+                    if (result.success && result.data.length > 0) {
+                        console.log(`Found ${result.data.length} markets in district: ${matchedLocation}`);
+                        isLocal = true;
+                    }
+                } else {
+                    console.log(`No matching district found for "${locationInfo.district}"`);
+                    console.log('Available districts sample:', districtsResult.data.slice(0, 5));
+                }
+            }
+
+            // Try exact location names as fallback
+            if (!result || !result.success || result.data.length === 0) {
+                console.log('Trying exact location names as fallback...');
+
+                // Try city name as state
+                if (locationInfo.city) {
+                    console.log('Trying city as state:', locationInfo.city);
+                    result = await this.getMarketPrices({
+                        state: locationInfo.city,
+                        limit: limit
+                    });
+
+                    if (result.success && result.data.length > 0) {
+                        console.log(`Found ${result.data.length} markets using city as state`);
+                        isLocal = true;
+                        matchedLocation = locationInfo.city;
+                    }
+                }
+
+                // Try city name as district
+                if ((!result || !result.success || result.data.length === 0) && locationInfo.city) {
+                    console.log('Trying city as district:', locationInfo.city);
+                    result = await this.getMarketPrices({
+                        district: locationInfo.city,
+                        limit: limit
+                    });
+
+                    if (result.success && result.data.length > 0) {
+                        console.log(`Found ${result.data.length} markets using city as district`);
+                        isLocal = true;
+                        matchedLocation = locationInfo.city;
+                    }
+                }
+            }
+
+            // If still no data, fetch general market prices
+            if (!result || !result.success || result.data.length === 0) {
+                console.log('No local data found, fetching general market prices');
+                result = await this.getMarketPrices({ limit });
+                isLocal = false;
+                matchedLocation = null;
+            }
+
+            if (result.success) {
+                const formattedData = result.data.map(record => this.formatPriceData(record));
+                return {
+                    success: true,
+                    data: formattedData,
+                    isLocal,
+                    locationUsed: matchedLocation
+                };
+            }
+
+            return { success: false, data: [], isLocal: false };
+        } catch (error) {
+            console.error('Error fetching nearby market prices:', error);
+            return { success: false, data: [], isLocal: false };
+        }
+    }
+
+    // Calculate distance between two coordinates (Haversine formula)
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radius of the Earth in kilometers
+        const dLat = this.deg2rad(lat2 - lat1);
+        const dLon = this.deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c; // Distance in kilometers
+        return distance;
+    }
+
+    deg2rad(deg) {
+        return deg * (Math.PI/180);
+    }
+}
+
+export const marketPriceService = new MarketPriceService();
+
+
+
+services/weatherService.js:
+
+// Weather API Service
+import Constants from 'expo-constants';
+
+// Try multiple ways to get the API key
+const getApiKey = () => {
+    // Method 1: From Expo Constants (app.config.js)
+    if (Constants.expoConfig?.extra?.weatherApiKey) {
+        return Constants.expoConfig.extra.weatherApiKey;
+    }
+
+    // Method 2: From process.env (direct access)
+    if (process.env.EXPO_PUBLIC_WEATHER_API_KEY) {
+        return process.env.EXPO_PUBLIC_WEATHER_API_KEY;
+    }
+
+    // Method 3: Fallback to hardcoded (not recommended for production)
+    return '3b0832ddf6dc414c815190329252410';
+};
+
+const WEATHER_API_KEY = getApiKey();
+const BASE_URL = 'https://api.weatherapi.com/v1';
+
+export const weatherService = {
+    // Test API key
+    testApiKey: async () => {
+        try {
+            console.log('Testing API key:', WEATHER_API_KEY);
+            const response = await fetch(
+                `${BASE_URL}/current.json?key=${WEATHER_API_KEY}&q=London&aqi=no`
+            );
+
+            const responseText = await response.text();
+            console.log('Test API Response:', response.status, responseText);
+
+            return {
+                success: response.ok,
+                status: response.status,
+                data: responseText
+            };
+        } catch (error) {
+            console.error('API Test error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    },
+
+    // Get current weather by coordinates
+    getCurrentWeather: async (latitude, longitude) => {
+        try {
+            console.log('API Key being used:', WEATHER_API_KEY ? 'Present' : 'Missing');
+            console.log('Making request to:', `${BASE_URL}/current.json?key=${WEATHER_API_KEY?.substring(0, 8)}...&q=${latitude},${longitude}&aqi=no`);
+
+            const response = await fetch(
+                `${BASE_URL}/current.json?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&aqi=no`
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Response:', response.status, errorText);
+                throw new Error(`Weather API error: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            return {
+                success: true,
+                data
+            };
+        } catch (error) {
+            console.error('Weather service error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    },
+
+    // Get weather forecast (optional for future use)
+    getForecast: async (latitude, longitude, days = 3) => {
+        try {
+            const response = await fetch(
+                `${BASE_URL}/forecast.json?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&days=${days}&aqi=no&alerts=no`
+            );
+
+            if (!response.ok) {
+                throw new Error(`Weather API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return {
+                success: true,
+                data
+            };
+        } catch (error) {
+            console.error('Weather forecast service error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+};
+
+
+app.config.js:
+
+
+import 'dotenv/config';
+
+export default {
+    expo: {
+        name: "AgroSync",
+        slug: "AgroSync",
+        version: "1.0.0",
+        orientation: "portrait",
+        icon: "./assets/images/boardingImage.png",
+        scheme: "agrosync",
+        userInterfaceStyle: "automatic",
+        newArchEnabled: true,
+
+        ios: { supportsTablet: true },
+
+        android: {
+            adaptiveIcon: {
+                backgroundColor: "#E6F4FE",
+                foregroundImage: "./assets/images/android-icon-foreground.png",
+                backgroundImage: "./assets/images/android-icon-background.png",
+                monochromeImage: "./assets/images/android-icon-monochrome.png"
+            },
+            edgeToEdgeEnabled: true,
+            predictiveBackGestureEnabled: false
+        },
+
+        web: {
+            output: "static",
+            favicon: "./assets/images/boardingImage.png"
+        },
+
+        plugins: [
+            "expo-router",
+            [
+                "expo-splash-screen",
+                {
+                    image: "./assets/images/boardingImage.png",
+                    imageWidth: 200,
+                    resizeMode: "contain",
+                    backgroundColor: "#ffffff",
+                    dark: { backgroundColor: "#000000" }
+                }
+            ],
+            "expo-font",
+            "expo-sqlite"
+        ],
+
+        experiments: {
+            typedRoutes: true,
+            reactCompiler: true
+        },
+
+        extra: {
+            supabaseUrl: process.env.EXPO_SUPABASE_URL,
+            supabaseAnonKey: process.env.EXPO_SUPABASE_ANON_KEY,
+            weatherApiKey: process.env.EXPO_PUBLIC_WEATHER_API_KEY
+        }
+    }
+};
+
+
+
