@@ -12,6 +12,7 @@ import {
     TextInput,
     ActivityIndicator,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import LottieView from "lottie-react-native";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { theme } from "../../constants/theme";
@@ -75,88 +76,130 @@ export default function Help() {
                     </Text>
                 </Accordion>
 
-                {/* ASK AI - REDESIGNED */}
-                <View style={styles.aiCardWrapper}>
-                    {/* Gradient Background Effect */}
-                    <View style={styles.gradientBg} />
-
-                    <View style={styles.aiCard}>
-                        {/* Header Section */}
-                        <View style={styles.aiHeader}>
-                            <View style={styles.aiIconContainer}>
-                                <LottieView
-                                    source={require("../../assets/animations/sparkle.json")}
-                                    autoPlay
-                                    loop
-                                    style={styles.lottieAnimation}
-                                />
-                            </View>
-                            <View style={styles.headerText}>
-                                <Text style={styles.aiMainTitle}>Ask AI</Text>
-                                <Text style={styles.aiSubtitle}>Get instant farming insights</Text>
-                            </View>
+                {/* ASK AI - REDESIGNED TO MATCH FAB MODAL */}
+                <View style={styles.aiCard}>
+                    {/* Header Section */}
+                    <View style={styles.aiHeader}>
+                        <View style={styles.aiIconContainer}>
+                            <LottieView
+                                source={require("../../assets/animations/sparkle.json")}
+                                autoPlay
+                                loop
+                                style={styles.lottieAnimation}
+                                colorFilters={[
+                                    {
+                                        keypath: "*",
+                                        color: "#ffffff"
+                                    }
+                                ]}
+                            />
                         </View>
+                        <View style={styles.headerText}>
+                            <Text style={styles.aiMainTitle}>AI Assistant</Text>
+                            <Text style={styles.aiSubtitle}>Ask me anything about farming</Text>
+                        </View>
+                    </View>
 
-                        {/* Description */}
-                        <Text style={styles.aiDescription}>
-                            Ask anything about field conditions, crop recommendations, or farming tips
-                        </Text>
-
-                        {/* Input Section */}
-                        <View style={styles.inputContainer}>
+                    {/* Input Section */}
+                    <View style={styles.inputSection}>
+                        <Text style={styles.inputLabel}>Your Question</Text>
+                        <View style={styles.inputWrapper}>
                             <TextInput
                                 value={q}
                                 onChangeText={setQ}
-                                placeholder="Ask your farming question..."
-                                placeholderTextColor="#a3b5b7"
+                                placeholder="e.g., What's the best time to plant rice?"
+                                placeholderTextColor="#94a3b8"
                                 multiline
+                                maxLength={500}
                                 style={styles.aiInput}
                                 editable={!loading}
                             />
-                            <View style={styles.inputDecor} />
+                            <View style={styles.inputDecoration} />
                         </View>
+                        <Text style={styles.charCount}>{q.length}/500</Text>
+                    </View>
 
-                        {/* Ask Button */}
-                        <Pressable
-                            onPress={onAsk}
-                            style={({ pressed }) => [
-                                styles.aiAskBtn,
-                                pressed && styles.aiAskBtnPressed,
-                            ]}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <View style={styles.loadingBtn}>
-                                    <ActivityIndicator color="white" size="small" />
-                                    <Text style={styles.aiAskBtnText}>Asking...</Text>
-                                </View>
-                            ) : (
-                                <View style={styles.btnContent}>
-                                    <Text style={styles.aiAskBtnText}>Ask AI</Text>
-                                    <Text style={styles.btnArrow}>→</Text>
-                                </View>
-                            )}
-                        </Pressable>
-
-                        {/* Error State */}
-                        {err ? (
-                            <View style={styles.aiErrorCard}>
-                                <Text style={styles.aiErrorIcon}>⚠️</Text>
-                                <Text style={styles.aiErrorText}>{err}</Text>
+                    {/* Ask Button */}
+                    <Pressable
+                        onPress={onAsk}
+                        style={({ pressed }) => [
+                            styles.askButton,
+                            pressed && styles.askButtonPressed,
+                            loading && styles.askButtonDisabled
+                        ]}
+                        disabled={loading || !q.trim()}
+                    >
+                        {loading ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator color="white" size="small" />
+                                <Text style={styles.askButtonText}>Thinking...</Text>
                             </View>
-                        ) : null}
+                        ) : (
+                            <View style={styles.buttonContent}>
+                                <Ionicons name="sparkles" size={20} color="white" />
+                                <Text style={styles.askButtonText}>Ask AI</Text>
+                                <Ionicons name="arrow-forward" size={20} color="white" />
+                            </View>
+                        )}
+                    </Pressable>
 
-                        {/* Answer State */}
-                        {answer ? (
-                            <View style={styles.aiAnswerBox}>
-                                <View style={styles.answerHeader}>
-                                    <Text style={styles.answerIcon}>💡</Text>
-                                    <Text style={styles.answerLabel}>AI Response</Text>
+                    {/* Error State */}
+                    {err ? (
+                        <View style={styles.errorCard}>
+                            <Ionicons name="alert-circle" size={20} color="#ef4444" />
+                            <Text style={styles.errorText}>{err}</Text>
+                        </View>
+                    ) : null}
+
+                    {/* Answer Section */}
+                    {answer ? (
+                        <View style={styles.answerSection}>
+                            <View style={styles.answerHeader}>
+                                <View style={styles.answerIconBox}>
+                                    <Ionicons name="bulb" size={20} color="#22c55e" />
                                 </View>
+                                <Text style={styles.answerTitle}>AI Response</Text>
+                            </View>
+                            <View style={styles.answerBox}>
                                 <Text style={styles.answerText}>{answer}</Text>
                             </View>
-                        ) : null}
-                    </View>
+
+                            {/* Action Button */}
+                            <View style={styles.actionButtons}>
+                                <Pressable
+                                    style={styles.actionButton}
+                                    onPress={() => {
+                                        setAnswer("");
+                                        setQ("");
+                                    }}
+                                >
+                                    <Ionicons name="refresh-outline" size={18} color="#64748b" />
+                                    <Text style={styles.actionButtonText}>New Question</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    ) : null}
+
+                    {/* Suggested Questions (only show when no answer) */}
+                    {!answer && !loading && (
+                        <View style={styles.suggestionsSection}>
+                            <Text style={styles.suggestionsTitle}>💡 Suggested Questions</Text>
+                            {[
+                                "What crops are suitable for my soil?",
+                                "How can I improve crop yield?",
+                                "Best fertilizer for wheat?",
+                                "When should I irrigate my field?"
+                            ].map((suggestion, index) => (
+                                <Pressable
+                                    key={index}
+                                    style={styles.suggestionChip}
+                                    onPress={() => setQ(suggestion)}
+                                >
+                                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                                </Pressable>
+                            ))}
+                        </View>
+                    )}
                 </View>
             </ScrollView>
         </ScreenWrapper>
@@ -221,179 +264,236 @@ const styles = StyleSheet.create({
         color: theme.colors.textLight,
     },
 
-    // ===== ASK AI CARD STYLES =====
-    aiCardWrapper: {
-        position: "relative",
-        marginTop: hp(2),
-        marginBottom: hp(6),
-    },
-    gradientBg: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: "100%",
-        backgroundColor: "rgba(63,191,101,0.08)",
-        borderRadius: 20,
-        zIndex: 0,
-    },
+    // ===== ASK AI CARD STYLES (MATCHING FAB MODAL) =====
     aiCard: {
-        backgroundColor: "#fff",
+        backgroundColor: "#ffffff",
         borderRadius: 20,
         padding: wp(5),
-        borderWidth: 2,
-        borderColor: theme.colors.primary,
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-        elevation: 12,
-        gap: hp(2),
-        zIndex: 1,
+        marginTop: hp(2),
+        marginBottom: hp(4),
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: "#f1f5f9",
     },
     aiHeader: {
         flexDirection: "row",
         alignItems: "center",
-        gap: wp(3),
+        marginBottom: hp(2),
+        paddingBottom: hp(2),
+        borderBottomWidth: 1,
+        borderBottomColor: "#f1f5f9",
     },
     aiIconContainer: {
-        width: wp(14),
-        height: wp(14),
-        borderRadius: wp(7),
-        backgroundColor: "rgba(63,191,101,0.15)",
-        justifyContent: "center",
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
         alignItems: "center",
+        justifyContent: "center",
+        marginRight: 12,
     },
     lottieAnimation: {
-        width: "200%",
-        height: "200%",
+        width: "140%",
+        height: "140%",
     },
     headerText: {
         flex: 1,
-        gap: hp(0.2),
     },
     aiMainTitle: {
-        fontSize: hp(2.4),
+        fontSize: hp(2.2),
         fontFamily: "SFNSDisplay-Bold",
-        color: theme.colors.primary,
+        color: "#1e293b",
     },
     aiSubtitle: {
         fontSize: hp(1.4),
         fontFamily: "SFNSText-Regular",
-        color: theme.colors.textLight,
+        color: "#64748b",
+        marginTop: 2,
     },
-    aiDescription: {
+
+    // Input Section
+    inputSection: {
+        marginBottom: hp(1.5),
+    },
+    inputLabel: {
         fontSize: hp(1.5),
-        fontFamily: "SFNSText-Regular",
-        color: theme.colors.textDark,
-        lineHeight: hp(2.1),
+        fontFamily: "SFNSText-Medium",
+        color: "#475569",
+        marginBottom: hp(1),
     },
-    inputContainer: {
+    inputWrapper: {
         position: "relative",
     },
     aiInput: {
-        borderWidth: 1.5,
-        borderColor: theme.colors.primary,
-        borderRadius: 14,
+        borderWidth: 2,
+        borderColor: "#e2e8f0",
+        borderRadius: 16,
         padding: wp(4),
         minHeight: hp(12),
         textAlignVertical: "top",
-        color: theme.colors.textDark,
+        color: "#1e293b",
         fontFamily: "SFNSText-Regular",
         fontSize: hp(1.6),
-        backgroundColor: "#fafbfa",
+        backgroundColor: "#f8fafc",
     },
-    inputDecor: {
+    inputDecoration: {
         position: "absolute",
-        bottom: hp(1),
-        right: wp(3),
-        width: wp(2),
-        height: wp(2),
-        borderRadius: wp(1),
-        backgroundColor: theme.colors.primary,
-        opacity: 0.3,
+        bottom: 12,
+        right: 12,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#22c55e",
+        opacity: 0.4,
     },
-    aiAskBtn: {
-        backgroundColor: theme.colors.primary,
+    charCount: {
+        fontSize: hp(1.3),
+        fontFamily: "SFNSText-Regular",
+        color: "#94a3b8",
+        textAlign: "right",
+        marginTop: hp(0.5),
+    },
+
+    // Ask Button
+    askButton: {
+        backgroundColor: "#22c55e",
         paddingVertical: hp(1.6),
         paddingHorizontal: wp(4),
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: "center",
         justifyContent: "center",
-        flexDirection: "row",
-        shadowColor: theme.colors.primary,
+        marginBottom: hp(2),
+        shadowColor: "#22c55e",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
         elevation: 8,
     },
-    aiAskBtnPressed: {
-        opacity: 0.9,
+    askButtonPressed: {
+        backgroundColor: "#16a34a",
         transform: [{ scale: 0.98 }],
     },
-    btnContent: {
+    askButtonDisabled: {
+        backgroundColor: "#94a3b8",
+        shadowOpacity: 0.1,
+    },
+    buttonContent: {
         flexDirection: "row",
         alignItems: "center",
-        gap: wp(2),
+        gap: 8,
     },
-    aiAskBtnText: {
-        color: "white",
-        fontFamily: "SFNSText-Medium",
-        fontSize: hp(1.9),
-    },
-    btnArrow: {
-        color: "white",
-        fontSize: hp(2),
-    },
-    loadingBtn: {
+    loadingContainer: {
         flexDirection: "row",
         alignItems: "center",
-        gap: wp(2),
+        gap: 12,
     },
-    aiErrorCard: {
-        backgroundColor: "#fff5f5",
-        borderRadius: 14,
-        padding: wp(4),
-        borderWidth: 1.5,
-        borderColor: "#ffc0c0",
+    askButtonText: {
+        color: "white",
+        fontFamily: "SFNSDisplay-Bold",
+        fontSize: hp(1.7),
+    },
+
+    // Error State
+    errorCard: {
+        backgroundColor: "#fef2f2",
+        borderRadius: 12,
+        padding: wp(3.5),
         flexDirection: "row",
-        gap: wp(3),
-        alignItems: "flex-start",
+        gap: wp(2.5),
+        alignItems: "center",
+        marginBottom: hp(2),
+        borderWidth: 1,
+        borderColor: "#fecaca",
     },
-    aiErrorIcon: {
-        fontSize: hp(2.2),
-    },
-    aiErrorText: {
-        color: "#c0392b",
+    errorText: {
+        color: "#dc2626",
         fontFamily: "SFNSText-Medium",
         fontSize: hp(1.5),
         flex: 1,
     },
-    aiAnswerBox: {
-        backgroundColor: "#f0fdf4",
-        borderRadius: 14,
-        padding: wp(4),
-        borderWidth: 1.5,
-        borderColor: "rgba(63,191,101,0.3)",
-        gap: hp(1.2),
+
+    // Answer Section
+    answerSection: {
+        marginTop: hp(1),
     },
     answerHeader: {
         flexDirection: "row",
         alignItems: "center",
-        gap: wp(2),
+        marginBottom: hp(1.2),
     },
-    answerIcon: {
-        fontSize: hp(2),
+    answerIconBox: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 10,
     },
-    answerLabel: {
-        fontSize: hp(1.5),
-        fontFamily: "SFNSText-Medium",
-        color: theme.colors.primary,
+    answerTitle: {
+        fontSize: hp(1.7),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#22c55e",
+    },
+    answerBox: {
+        backgroundColor: "#f0fdf4",
+        padding: wp(4),
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: "rgba(34, 197, 94, 0.2)",
     },
     answerText: {
         fontSize: hp(1.6),
         fontFamily: "SFNSText-Regular",
-        color: theme.colors.textDark,
-        lineHeight: hp(2.4),
+        color: "#1e293b",
+        lineHeight: hp(2.3),
+    },
+    actionButtons: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        marginTop: hp(1.2),
+    },
+    actionButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingVertical: hp(1),
+        paddingHorizontal: wp(3.5),
+        borderRadius: 10,
+        backgroundColor: "#f1f5f9",
+    },
+    actionButtonText: {
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Medium",
+        color: "#64748b",
+    },
+
+    // Suggestions Section
+    suggestionsSection: {
+        marginTop: hp(1),
+    },
+    suggestionsTitle: {
+        fontSize: hp(1.5),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#475569",
+        marginBottom: hp(1.2),
+    },
+    suggestionChip: {
+        backgroundColor: "#f8fafc",
+        paddingVertical: hp(1.2),
+        paddingHorizontal: wp(4),
+        borderRadius: 12,
+        marginBottom: hp(1),
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+    },
+    suggestionText: {
+        fontSize: hp(1.5),
+        fontFamily: "SFNSText-Regular",
+        color: "#475569",
     },
 });

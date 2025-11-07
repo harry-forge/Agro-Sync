@@ -1,19 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
-import {FieldProvider} from "../../contexts/FieldContext";
+import { FieldProvider } from "../../contexts/FieldContext";
+import AskAIFab from "../../components/AskAIFab";   // <--- ADDED
 
 const COLORS = {
-    primary: '#22C55E', // Vibrant green
+    primary: '#22C55E',
     primaryDark: '#16A34A',
     background: '#FFFFFF',
     inactive: '#94A3B8',
-    activeBackground: '#DCFCE7', // Light green background
+    activeBackground: '#DCFCE7',
     shadow: '#000000',
     border: '#F1F5F9',
 };
 
-// Enhanced Tab Bar Icon Component
 const TabBarIcon = ({ name, color, focused }) => {
     return (
         <View style={[
@@ -36,106 +36,114 @@ const TabBarIcon = ({ name, color, focused }) => {
 };
 
 export default function TabLayout() {
+    const segments = useSegments();
+    const onHelp = segments.includes("help"); // <--- determines if current screen = help
+
     return (
         <FieldProvider>
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.inactive,
-                tabBarStyle: {
-                    position: 'absolute',
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    backgroundColor: COLORS.background,
-                    borderRadius: 30,
-                    height: 80,
-                    paddingBottom: 15,
-                    paddingTop: 12,
-                    paddingHorizontal: 15,
-                    borderTopWidth: 0,
-                    borderWidth: 0,
-                    marginHorizontal: 15,
-                    ...Platform.select({
-                        ios: {
-                            shadowColor: COLORS.shadow,
-                            shadowOffset: { width: 0, height: 10 },
-                            shadowOpacity: 0.15,
-                            shadowRadius: 25,
+            <>
+                <Tabs
+                    screenOptions={{
+                        headerShown: false,
+                        tabBarActiveTintColor: COLORS.primary,
+                        tabBarInactiveTintColor: COLORS.inactive,
+                        tabBarStyle: {
+                            position: 'absolute',
+                            bottom: 20,
+                            left: 20,
+                            right: 20,
+                            backgroundColor: COLORS.background,
+                            borderRadius: 30,
+                            height: 80,
+                            paddingBottom: 15,
+                            paddingTop: 12,
+                            paddingHorizontal: 15,
+                            borderTopWidth: 0,
+                            borderWidth: 0,
+                            marginHorizontal: 15,
+                            ...Platform.select({
+                                ios: {
+                                    shadowColor: COLORS.shadow,
+                                    shadowOffset: { width: 0, height: 10 },
+                                    shadowOpacity: 0.15,
+                                    shadowRadius: 25,
+                                },
+                                android: {
+                                    elevation: 15,
+                                },
+                            }),
                         },
-                        android: {
-                            elevation: 15,
+                        tabBarLabelStyle: {
+                            fontSize: 11,
+                            fontFamily: 'SFNSText-Bold',
+                            fontWeight: '700',
+                            letterSpacing: 0.5,
+                            marginTop: 8,
                         },
-                    }),
-                },
-                tabBarLabelStyle: {
-                    fontSize: 11,
-                    fontFamily: 'SFNSText-Bold',
-                    fontWeight: '700',
-                    letterSpacing: 0.5,
-                    marginTop: 8,
-                },
-                tabBarItemStyle: {
-                    paddingVertical: 5,
-                },
-                tabBarShowLabel: true,
-                tabBarHideOnKeyboard: true,
-            }}
-        >
-            <Tabs.Screen
-                name="home"
-                options={{
-                    title: "Home",
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabBarIcon
-                            name={focused ? "home" : "home-outline"}
-                            color={color}
-                            focused={focused}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="recommendation"
-                options={{
-                    title: "Market",
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabBarIcon
-                            name={focused ? "telescope" : "telescope-outline"}
-                            color={color}
-                            focused={focused}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="fields"
-                options={{
-                    title: "Fields",
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabBarIcon
-                            name={focused ? "leaf" : "leaf-outline"}
-                            color={color}
-                            focused={focused}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="help"
-                options={{
-                    title: "Help",
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabBarIcon
-                            name={focused ? "compass" : "compass-outline"}
-                            color={color}
-                            focused={focused}
-                        />
-                    ),
-                }}
-            />
-        </Tabs>
+                        tabBarItemStyle: {
+                            paddingVertical: 5,
+                        },
+                        tabBarShowLabel: true,
+                        tabBarHideOnKeyboard: true,
+                    }}
+                >
+                    <Tabs.Screen
+                        name="home"
+                        options={{
+                            title: "Home",
+                            tabBarIcon: ({ color, focused }) => (
+                                <TabBarIcon
+                                    name={focused ? "home" : "home-outline"}
+                                    color={color}
+                                    focused={focused}
+                                />
+                            ),
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="recommendation"
+                        options={{
+                            title: "Market",
+                            tabBarIcon: ({ color, focused }) => (
+                                <TabBarIcon
+                                    name={focused ? "telescope" : "telescope-outline"}
+                                    color={color}
+                                    focused={focused}
+                                />
+                            ),
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="fields"
+                        options={{
+                            title: "Fields",
+                            tabBarIcon: ({ color, focused }) => (
+                                <TabBarIcon
+                                    name={focused ? "leaf" : "leaf-outline"}
+                                    color={color}
+                                    focused={focused}
+                                />
+                            ),
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="help"
+                        options={{
+                            title: "Help",
+                            tabBarIcon: ({ color, focused }) => (
+                                <TabBarIcon
+                                    name={focused ? "compass" : "compass-outline"}
+                                    color={color}
+                                    focused={focused}
+                                />
+                            ),
+                        }}
+                    />
+                </Tabs>
+
+                {/* FAB SHOWS ON ALL SCREENS EXCEPT HELP */}
+                {!onHelp && <AskAIFab />}
+            </>
         </FieldProvider>
     );
 }
