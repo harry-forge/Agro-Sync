@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const API_KEY = '579b464db66ec23bdd000001bc96414976a7475e48eb5efbbb1c9496';
+const API_KEY = '579b464db66ec23bdd000001beb77a6c77b64c884b816bcbd6ae14cb';
 const BASE_URL = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
 
 async function testRealTimeSearch(searchTerm) {

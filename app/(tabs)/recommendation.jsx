@@ -26,6 +26,7 @@ const Recommendation = () => {
     const [selectedCommodity, setSelectedCommodity] = useState('');
     const [commodities, setCommodities] = useState([]);
     const [isSearchMode, setIsSearchMode] = useState(false); // New state to track if we're in search mode
+    const [isUsingFallback, setIsUsingFallback] = useState(false); // Track fallback data usage
 
     useEffect(() => {
         fetchMarketData();
@@ -61,6 +62,7 @@ const Recommendation = () => {
                     marketPriceService.formatPriceData(record)
                 );
                 setMarketData(formattedData);
+                setIsUsingFallback(result.isFallback || false);
             } else {
                 console.error('❌ Failed to fetch market data:', result.error);
             }
@@ -229,7 +231,16 @@ const Recommendation = () => {
         <View style={styles.marketCard}>
             <View style={styles.cardHeader}>
                 <View style={styles.commodityInfo}>
-                    <Text style={styles.commodityName}>{item.commodity}</Text>
+                    <View style={styles.commodityTitleRow}>
+                        <Text style={styles.commodityName}>{item.commodity}</Text>
+                        <LottieView
+                            source={require('../../assets/animations/shop.json')}
+                            style={styles.shopAnimation}
+                            autoPlay
+                            loop
+                            speed={0.5}
+                        />
+                    </View>
                     <Text style={styles.varietyText}>{item.variety}</Text>
                 </View>
                 <View style={styles.priceContainer}>
@@ -287,11 +298,11 @@ const Recommendation = () => {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <LottieView
-                        source={require('../../assets/animations/nature.json')}
+                        source={require('../../assets/animations/shop.json')}
                         style={styles.headerIcon}
                         autoPlay
                         loop
-                        speed={0.8}
+                        speed={0.6}
                     />
                     <View>
                         <Text style={styles.headerTitle}>Market Prices</Text>
@@ -324,6 +335,16 @@ const Recommendation = () => {
                     </Pressable>
                 ) : null}
             </View>
+
+            {/* Fallback Data Notification */}
+            {isUsingFallback && (
+                <View style={styles.fallbackNotification}>
+                    <Ionicons name="warning-outline" size={18} color="#ef4444" />
+                    <Text style={styles.fallbackText}>
+                        � Servers are down - Showing fallback data
+                    </Text>
+                </View>
+            )}
 
             {/* Results Counter */}
             {(searchQuery || selectedCommodity || isSearchMode) && !searchLoading && (
@@ -550,6 +571,18 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: theme.colors.textDark,
         marginBottom: 4,
+        flex: 1,
+    },
+    commodityTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    shopAnimation: {
+        width: wp(8),
+        height: wp(8),
+        marginLeft: wp(2),
     },
     varietyText: {
         fontSize: hp(1.4),
@@ -670,6 +703,25 @@ const styles = StyleSheet.create({
         fontSize: hp(1.4),
         color: theme.colors.textLight,
         fontStyle: 'italic',
+    },
+    fallbackNotification: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fee2e2',
+        marginHorizontal: wp(4),
+        marginVertical: hp(1),
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1.5),
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#ef4444',
+    },
+    fallbackText: {
+        fontSize: hp(1.4),
+        color: '#dc2626',
+        marginLeft: wp(2),
+        flex: 1,
+        fontWeight: '500',
     },
 
 });
