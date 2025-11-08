@@ -235,9 +235,9 @@ export async function getRefinedRecommendation(data) {
 
 Data: ${data.temperature}°C, ${data.humidity}% humidity, ${data.moisture}% moisture, ${data.rainfall}mm rain, NPK: ${data.N}/${data.P}/${data.K}, pH ${data.pH}, ${data.farmSize}ac, ₹${data.budget}, ${data.laborAvailability} labor, ${data.irrigationSystem} irrigation, ${data.marketDistance}km market, ${data.soilTexture} soil.
 
-Return 2 crops to grow, 2 to avoid, 3 general soil improvement tips 
+Return 3 crops to grow, 2 to avoid, 3 general soil improvement tips, 3 profit strategies(must be 4-8 words max).
 Return all of this without any newline characters or formatting, ONLY this JSON:
-{"topCrops":[{"name":"crop","reason":"brief"}],"avoidCrops":[{"name":"crop","reason":"brief"}],"soilImprovements":["tip","tip","tip"]}`;
+{"topCrops":[{"name":"crop","reason":"brief","expectedYield","estimatedProfit","growingPeriod"}],"avoidCrops":[{"name":"crop","reason":"brief"}],"soilImprovements":["tip","tip","tip"], "profitStrategies":["strategy","strategy","strategy"]}`;
 
     console.log("📨 Sending request to Gemini...");
 
@@ -248,7 +248,7 @@ Return all of this without any newline characters or formatting, ONLY this JSON:
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: 0.1,
-                maxOutputTokens: 2048,
+                maxOutputTokens: 8192,
                 candidateCount: 1,
             },
             safetySettings: [
