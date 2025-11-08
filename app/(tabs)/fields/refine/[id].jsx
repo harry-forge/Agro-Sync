@@ -1,5 +1,4 @@
-// app/(tabs)/fields/refine/[id].jsx - DEBUG VERSION
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -40,7 +39,7 @@ export default function RefineRecommendation() {
 
     const handleGetRefinedRecommendation = async () => {
         if (!farmSize || !budget || !marketDistance) {
-            setError("Please fill in all required fields (Farm Size, Budget, Market Distance)");
+            setError("Please fill Farm Size, Budget & Market Distance");
             return;
         }
 
@@ -48,19 +47,8 @@ export default function RefineRecommendation() {
             setLoading(true);
             setError("");
 
-            console.log("📝 Sending refinement data...");
-            console.log("Field Data:", {
-                temperature: fieldData.temperature,
-                humidity: fieldData.humidity,
-                moisture: fieldData.moisture,
-                N: fieldData.N,
-                P: fieldData.P,
-                K: fieldData.K,
-                pH: fieldData.pH,
-            });
-
             const refinementData = {
-                // Original field data
+                // Field context fallbacks
                 temperature: fieldData.temperature || 25,
                 humidity: fieldData.humidity || 65,
                 moisture: fieldData.moisture || 50,
@@ -84,11 +72,7 @@ export default function RefineRecommendation() {
                 organicPreference,
             };
 
-            console.log("📤 Refinement payload:", refinementData);
-
             const refinedData = await getRefinedRecommendation(refinementData);
-
-            console.log("✅ Received refined data:", refinedData);
 
             // Store refined data in context
             setFieldData({
@@ -96,18 +80,31 @@ export default function RefineRecommendation() {
                 refinedRecommendation: refinedData,
             });
 
-            console.log("💾 Stored in context, navigating back...");
-
-            // Navigate back to field details
-            router.back();
+            // Navigate to new premium result page
+            router.replace(`/fields/refineSummary/${id}`);
         } catch (e) {
-            console.error("❌ Refinement error:", e);
-            console.error("❌ Error stack:", e.stack);
-            setError(e.message || "Failed to get refined recommendation. Please try again.");
+            console.error("Refine error", e);
+            setError(e.message || "Failed to get refined recommendation. Try again.");
         } finally {
             setLoading(false);
         }
     };
+
+    const OptionRow = ({ label, options, valueSetter, value }) => (
+        <View style={styles.optionsRow}>
+            {options.map((opt) => (
+                <Pressable
+                    key={opt}
+                    style={[styles.optionChip, value === opt && styles.optionChipSelected]}
+                    onPress={() => valueSetter(opt)}
+                >
+                    <Text style={[styles.optionText, value === opt && styles.optionTextSelected]}>
+                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    </Text>
+                </Pressable>
+            ))}
+        </View>
+    );
 
     return (
         <ScreenWrapper bg="white">
@@ -119,230 +116,94 @@ export default function RefineRecommendation() {
 
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.sectionDesc}>
-                    Help us understand your farming conditions better for a more personalized recommendation.
+                    Tell us a bit about your field & resources so we can sharpen the recommendation.
                 </Text>
 
-                {/* Farm Size & Budget */}
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Farm Details</Text>
+                    <Text style={styles.label}>Farm Size (acres) *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g., 5"
+                        value={farmSize}
+                        onChangeText={setFarmSize}
+                        keyboardType="decimal-pad"
+                    />
 
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Farm Size (acres) *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g., 5"
-                            value={farmSize}
-                            onChangeText={setFarmSize}
-                            keyboardType="decimal-pad"
-                        />
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Budget (₹) *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g., 50000"
-                            value={budget}
-                            onChangeText={setBudget}
-                            keyboardType="number-pad"
-                        />
-                    </View>
+                    <Text style={[styles.label, { marginTop: hp(1.2) }]}>Budget (₹) *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g., 50000"
+                        value={budget}
+                        onChangeText={setBudget}
+                        keyboardType="number-pad"
+                    />
                 </View>
 
-                {/* Water & Irrigation */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Water Resources</Text>
+                    <Text style={styles.cardTitle}>Water & Irrigation</Text>
+                    <Text style={styles.label}>Primary Water Source</Text>
+                    <OptionRow
+                        options={["rainwater", "borewell", "canal", "river"]}
+                        value={waterSource}
+                        valueSetter={setWaterSource}
+                    />
 
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Primary Water Source</Text>
-                        <View style={styles.optionsRow}>
-                            {["rainwater", "borewell", "canal", "river"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        waterSource === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setWaterSource(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            waterSource === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Irrigation System</Text>
-                        <View style={styles.optionsRow}>
-                            {["none", "drip", "sprinkler", "flood"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        irrigationSystem === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setIrrigationSystem(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            irrigationSystem === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
+                    <Text style={[styles.label, { marginTop: hp(1) }]}>Irrigation System</Text>
+                    <OptionRow
+                        options={["none", "drip", "sprinkler", "flood"]}
+                        value={irrigationSystem}
+                        valueSetter={setIrrigationSystem}
+                    />
                 </View>
 
-                {/* Labor & Market */}
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Resources & Market</Text>
+                    <Text style={styles.label}>Labor Availability</Text>
+                    <OptionRow
+                        options={["low", "moderate", "high"]}
+                        value={laborAvailability}
+                        valueSetter={setLaborAvailability}
+                    />
 
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Labor Availability</Text>
-                        <View style={styles.optionsRow}>
-                            {["low", "moderate", "high"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        laborAvailability === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setLaborAvailability(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            laborAvailability === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Market Distance (km) *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g., 15"
-                            value={marketDistance}
-                            onChangeText={setMarketDistance}
-                            keyboardType="decimal-pad"
-                        />
-                    </View>
+                    <Text style={[styles.label, { marginTop: hp(1) }]}>Market Distance (km) *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g., 15"
+                        value={marketDistance}
+                        onChangeText={setMarketDistance}
+                        keyboardType="decimal-pad"
+                    />
                 </View>
 
-                {/* Farming Experience */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Experience & Preferences</Text>
+                    <Text style={styles.cardTitle}>Experience & Soil</Text>
+                    <Text style={styles.label}>Farming Experience</Text>
+                    <OptionRow
+                        options={["beginner", "intermediate", "expert"]}
+                        value={farmingExperience}
+                        valueSetter={setFarmingExperience}
+                    />
 
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Farming Experience</Text>
-                        <View style={styles.optionsRow}>
-                            {["beginner", "intermediate", "expert"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        farmingExperience === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setFarmingExperience(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            farmingExperience === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
+                    <Text style={[styles.label, { marginTop: hp(1) }]}>Soil Texture</Text>
+                    <OptionRow
+                        options={["sandy", "loamy", "clayey", "silty"]}
+                        value={soilTexture}
+                        valueSetter={setSoilTexture}
+                    />
 
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Organic Farming Preference</Text>
-                        <View style={styles.optionsRow}>
-                            {["organic", "mixed", "conventional"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        organicPreference === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setOrganicPreference(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            organicPreference === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
-                </View>
-
-                {/* Soil & Previous Crop */}
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Soil & Crop History</Text>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Soil Texture</Text>
-                        <View style={styles.optionsRow}>
-                            {["sandy", "loamy", "clayey", "silty"].map((option) => (
-                                <Pressable
-                                    key={option}
-                                    style={[
-                                        styles.optionChip,
-                                        soilTexture === option && styles.optionChipSelected,
-                                    ]}
-                                    onPress={() => setSoilTexture(option)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            soilTexture === option && styles.optionTextSelected,
-                                        ]}
-                                    >
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Previous Crop (Optional)</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g., Wheat, Rice, etc."
-                            value={previousCrop}
-                            onChangeText={setPreviousCrop}
-                        />
-                    </View>
+                    <Text style={[styles.label, { marginTop: hp(1) }]}>Previous Crop (Optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g., Wheat, Rice"
+                        value={previousCrop}
+                        onChangeText={setPreviousCrop}
+                    />
                 </View>
 
                 {error ? (
                     <View style={styles.errorBox}>
-                        <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                        <Ionicons name="alert-circle" size={18} color="#b91c1c" />
                         <Text style={styles.errorText}>{error}</Text>
                     </View>
                 ) : null}
@@ -353,13 +214,13 @@ export default function RefineRecommendation() {
                     disabled={loading}
                 >
                     {loading ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <>
                             <ActivityIndicator color="white" />
-                            <Text style={styles.submitButtonText}>Getting Recommendation...</Text>
-                        </View>
+                            <Text style={styles.submitButtonText}>Processing...</Text>
+                        </>
                     ) : (
                         <>
-                            <Ionicons name="sparkles" size={22} color="white" />
+                            <Ionicons name="sparkles" size={20} color="white" />
                             <Text style={styles.submitButtonText}>Get Refined Recommendation</Text>
                         </>
                     )}
@@ -391,59 +252,55 @@ const styles = StyleSheet.create({
     },
     sectionDesc: {
         fontSize: hp(1.5),
-        fontFamily: "SFNSText-Regular",
         color: theme.colors.textLight,
         lineHeight: hp(2.1),
-        marginBottom: hp(0.5),
     },
     card: {
         backgroundColor: "#fff",
-        borderRadius: 16,
+        borderRadius: 14,
         padding: wp(4),
         borderWidth: 1,
-        borderColor: "rgba(80,200,120,0.12)",
-        shadowColor: "rgb(2,57,18)",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 6,
-        gap: hp(1.5),
+        borderColor: "rgba(0,0,0,0.04)",
+        shadowColor: "#0b3b1f",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.06,
+        shadowRadius: 18,
+        elevation: 8,
+        gap: hp(1.1),
     },
     cardTitle: {
-        fontSize: hp(1.9),
+        fontSize: hp(1.8),
         fontFamily: "SFNSDisplay-Bold",
         color: theme.colors.textDark,
-        marginBottom: hp(0.5),
-    },
-    fieldGroup: {
-        gap: hp(0.8),
+        marginBottom: hp(0.6),
     },
     label: {
-        fontSize: hp(1.5),
+        fontSize: hp(1.4),
+        color: theme.colors.textLight,
         fontFamily: "SFNSText-Medium",
-        color: theme.colors.textDark,
     },
     input: {
-        borderWidth: 1.5,
-        borderColor: "#e2e8f0",
+        borderWidth: 1,
+        borderColor: "#e6eef5",
         borderRadius: 12,
         padding: wp(3.5),
         fontSize: hp(1.6),
+        backgroundColor: "#fbfeff",
+        marginTop: hp(0.6),
         fontFamily: "SFNSText-Regular",
-        color: theme.colors.textDark,
-        backgroundColor: "#f8fafc",
     },
     optionsRow: {
         flexDirection: "row",
         flexWrap: "wrap",
         gap: wp(2),
+        marginTop: hp(0.6),
     },
     optionChip: {
-        paddingVertical: hp(1),
+        paddingVertical: hp(0.9),
         paddingHorizontal: wp(4),
         borderRadius: 20,
-        borderWidth: 1.5,
-        borderColor: "#e2e8f0",
+        borderWidth: 1,
+        borderColor: "#eef6f0",
         backgroundColor: "#fff",
     },
     optionChipSelected: {
@@ -452,8 +309,8 @@ const styles = StyleSheet.create({
     },
     optionText: {
         fontSize: hp(1.4),
-        fontFamily: "SFNSText-Medium",
         color: theme.colors.textLight,
+        fontFamily: "SFNSText-Medium",
     },
     optionTextSelected: {
         color: "#fff",
@@ -462,36 +319,34 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: wp(2),
-        backgroundColor: "#fef2f2",
-        padding: wp(3.5),
+        backgroundColor: "#fff5f5",
+        padding: wp(3),
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#fecaca",
+        borderColor: "#ffd6d6",
     },
     errorText: {
-        flex: 1,
         fontSize: hp(1.5),
+        color: "#b91c1c",
         fontFamily: "SFNSText-Medium",
-        color: "#dc2626",
     },
     submitButton: {
         backgroundColor: theme.colors.primary,
-        paddingVertical: hp(1.8),
+        paddingVertical: hp(1.6),
         borderRadius: 12,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
         gap: wp(2),
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
         marginTop: hp(1),
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 18,
+        elevation: 10,
     },
     submitButtonDisabled: {
-        backgroundColor: "#94a3b8",
-        shadowOpacity: 0.1,
+        opacity: 0.8,
     },
     submitButtonText: {
         color: "white",

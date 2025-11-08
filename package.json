@@ -45,6 +45,7 @@
     "feather-icons": "^4.29.2",
     "lottie-react-native": "^7.3.4",
     "lottie-web": "^5.13.0",
+    "moti": "^0.30.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
