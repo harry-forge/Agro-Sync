@@ -86,12 +86,12 @@ export default function Help() {
                                 autoPlay
                                 loop
                                 style={styles.lottieAnimation}
-                                colorFilters={[
-                                    {
-                                        keypath: "*",
-                                        color: "#ffffff"
-                                    }
-                                ]}
+                                // colorFilters={[
+                                //     {
+                                //         keypath: "*",
+                                //         color: "#ffffff"
+                                //     }
+                                // ]}
                             />
                         </View>
                         <View style={styles.headerText}>
@@ -297,8 +297,8 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     lottieAnimation: {
-        width: "140%",
-        height: "140%",
+        width: "190%",
+        height: "190%",
     },
     headerText: {
         flex: 1,
