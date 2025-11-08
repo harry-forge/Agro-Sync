@@ -29,7 +29,8 @@ export default function FieldsIndex() {
                 <Pressable
                     style={[styles.card, styles.addCard]}
                     onPress={() =>
-                        Alert.alert("Coming Soon", "Multiple fields support is coming soon!")
+                        // Alert.alert("Coming Soon", "Multiple fields support is coming soon!")
+                        Alert.alert("Coming Soon", "Oooo Madarchod, Kal Aana!")
                     }
                 >
                     <Text style={styles.addText}>+ Add Field</Text>

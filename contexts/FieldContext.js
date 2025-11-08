@@ -1,4 +1,4 @@
-// contexts/FieldContext.js
+// contexts/FieldContext.js - UPDATED
 import { createContext, useContext, useState, useMemo } from "react";
 
 const FieldContext = createContext(null);
@@ -18,12 +18,35 @@ export function FieldProvider({ children }) {
         K: null,
         pH: null,
 
-        // new caching
+        // Basic recommendation caching
         recommendation: null,
         englishDesc: null,
         hindiDesc: null,
-    });
 
+        // NEW: Refined recommendation data
+        refinedRecommendation: null,
+        /* Structure:
+        {
+            topCrops: [
+                {
+                    name: "Crop Name",
+                    reason: "Detailed reason...",
+                    expectedYield: "X tons/acre",
+                    estimatedProfit: "₹X",
+                    growingPeriod: "X months"
+                }
+            ],
+            avoidCrops: [
+                {
+                    name: "Crop Name",
+                    reason: "Reason to avoid..."
+                }
+            ],
+            soilImprovements: ["Tip 1", "Tip 2", "Tip 3"],
+            profitStrategies: ["Strategy 1", "Strategy 2", "Strategy 3"]
+        }
+        */
+    });
 
     const [lastFetchedAt, setLastFetchedAt] = useState(null);
 

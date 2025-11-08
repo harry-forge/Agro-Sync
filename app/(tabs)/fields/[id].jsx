@@ -1,4 +1,4 @@
-// app/(tabs)/fields/[id].jsx
+// app/(tabs)/fields/[id].jsx - UPDATED VERSION
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
 import ScreenWrapper from "../../../components/ScreenWrapper";
@@ -104,8 +104,9 @@ export default function FieldDetails() {
                 recommendation: rec,
                 englishDesc: both.english,
                 hindiDesc: both.hindi,
+                // Keep existing refined recommendation
+                refinedRecommendation: fieldData.refinedRecommendation,
             });
-
 
             setLastFetchedAt(Date.now());
         } catch (e) {
@@ -125,6 +126,8 @@ export default function FieldDetails() {
     }, [id]);
 
     const handleTranslate = () => setIsHindi(!isHindi);
+
+    const hasRefinedRecommendation = fieldData.refinedRecommendation != null;
 
     return (
         <ScreenWrapper bg="white">
@@ -179,8 +182,9 @@ export default function FieldDetails() {
                             </View>
                         </View>
 
-                        <View style={styles.card}>
-                            <Text style={styles.cardTitle}>Today’s Recommendation</Text>
+                        {/* Simple Recommendation Card */}
+                        <View style={[styles.card,styles.lastCard]}>
+                            <Text style={styles.cardTitle}>Today's Recommendation</Text>
                             {recommendation || fieldData.recommendation ? (
                                 <View style={{ gap: hp(1) }}>
                                     <Text style={styles.recoCrop}>{(recommendation || fieldData.recommendation)?.best_crop}</Text>
@@ -199,7 +203,6 @@ export default function FieldDetails() {
                                                 </Text>
                                             </View>
 
-
                                             <Pressable
                                                 onPress={handleTranslate}
                                                 style={styles.translateBtn}
@@ -210,11 +213,118 @@ export default function FieldDetails() {
                                             </Pressable>
                                         </>
                                     )}
+
+                                    {/* Refine Button - Only show if no refined recommendation yet */}
+                                    {!hasRefinedRecommendation && (
+                                        <Pressable
+                                            style={styles.refineBtn}
+                                            onPress={() => router.push(`/fields/refine/${id}`)}
+                                        >
+                                            <Ionicons name="options-outline" size={20} color="white" />
+                                            <Text style={styles.refineBtnText}>Refine My Recommendation</Text>
+                                        </Pressable>
+                                    )}
                                 </View>
                             ) : (
                                 <Text style={styles.descPlaceholder}>No recommendation available.</Text>
                             )}
                         </View>
+
+                        {/* Refined Recommendation Section */}
+                        {hasRefinedRecommendation && (
+                            <>
+                                <View style={styles.refinedHeaderCard}>
+                                    <View style={styles.refinedHeader}>
+                                        <Ionicons name="sparkles" size={24} color={theme.colors.primary} />
+                                        <Text style={styles.refinedTitle}>Refined Recommendation</Text>
+                                    </View>
+                                    <Pressable
+                                        style={styles.refineAgainBtn}
+                                        onPress={() => router.push(`/fields/refine/${id}`)}
+                                    >
+                                        <Ionicons name="refresh-outline" size={18} color={theme.colors.primary} />
+                                        <Text style={styles.refineAgainText}>Refine Again</Text>
+                                    </Pressable>
+                                </View>
+
+                                {/* Top 3 Crops */}
+                                <View style={styles.card}>
+                                    <View style={styles.sectionHeader}>
+                                        <Ionicons name="leaf" size={22} color="#22c55e" />
+                                        <Text style={styles.sectionTitle}>Best Crops for Your Field</Text>
+                                    </View>
+                                    {fieldData.refinedRecommendation.topCrops?.map((crop, idx) => (
+                                        <View key={idx} style={styles.cropCard}>
+                                            <View style={styles.cropHeader}>
+                                                <Text style={styles.cropRank}>#{idx + 1}</Text>
+                                                <Text style={styles.cropName}>{crop.name}</Text>
+                                            </View>
+                                            <Text style={styles.cropReason}>{crop.reason}</Text>
+                                            <View style={styles.cropMetrics}>
+                                                <View style={styles.metricItem}>
+                                                    <Ionicons name="trending-up" size={16} color="#22c55e" />
+                                                    <Text style={styles.metricText}>{crop.expectedYield}</Text>
+                                                </View>
+                                                <View style={styles.metricItem}>
+                                                    <Ionicons name="cash-outline" size={16} color="#22c55e" />
+                                                    <Text style={styles.metricText}>{crop.estimatedProfit}</Text>
+                                                </View>
+                                                <View style={styles.metricItem}>
+                                                    <Ionicons name="time-outline" size={16} color="#64748b" />
+                                                    <Text style={styles.metricText}>{crop.growingPeriod}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
+                                    ))}
+                                </View>
+
+                                {/* Crops to Avoid */}
+                                <View style={styles.card}>
+                                    <View style={styles.sectionHeader}>
+                                        <Ionicons name="close-circle" size={22} color="#ef4444" />
+                                        <Text style={styles.sectionTitle}>Crops to Avoid</Text>
+                                    </View>
+                                    {fieldData.refinedRecommendation.avoidCrops?.map((crop, idx) => (
+                                        <View key={idx} style={styles.avoidCropCard}>
+                                            <Text style={styles.avoidCropName}>{crop.name}</Text>
+                                            <Text style={styles.avoidCropReason}>{crop.reason}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+
+                                {/* Soil Improvements */}
+                                <View style={styles.card}>
+                                    <View style={styles.sectionHeader}>
+                                        <Ionicons name="flask" size={22} color="#f59e0b" />
+                                        <Text style={styles.sectionTitle}>Soil Improvement Tips</Text>
+                                    </View>
+                                    {fieldData.refinedRecommendation.soilImprovements?.map((tip, idx) => (
+                                        <View key={idx} style={styles.tipCard}>
+                                            <View style={styles.tipBullet}>
+                                                <Text style={styles.tipBulletText}>{idx + 1}</Text>
+                                            </View>
+                                            <Text style={styles.tipText}>{tip}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+
+                                {/* Profit Strategies */}
+                                <View style={styles.card}>
+                                    <View style={styles.sectionHeader}>
+                                        <Ionicons name="bulb" size={22} color="#8b5cf6" />
+                                        <Text style={styles.sectionTitle}>Profit Maximization Strategies</Text>
+                                    </View>
+                                    {fieldData.refinedRecommendation.profitStrategies?.map((strategy, idx) => (
+                                        <View key={idx} style={styles.strategyCard}>
+                                            <View style={styles.strategyBullet}>
+                                                <Ionicons name="checkmark" size={18} color="white" />
+                                            </View>
+                                            <Text style={styles.strategyText}>{strategy}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </>
+                        )}
                     </>
                 )}
             </ScrollView>
@@ -357,4 +467,208 @@ const styles = StyleSheet.create({
         color: "white",
         fontFamily: "SFNSText-Medium",
     },
+    refineBtn: {
+        backgroundColor: "#8b5cf6",
+        paddingVertical: hp(1.4),
+        borderRadius: 10,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: wp(2),
+        marginTop: hp(0.5),
+        shadowColor: "#8b5cf6",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    refineBtnText: {
+        color: "white",
+        fontFamily: "SFNSDisplay-Bold",
+        fontSize: hp(1.6),
+    },
+
+    // Refined Recommendation Styles
+    refinedHeaderCard: {
+        backgroundColor: "#f0fdf4",
+        borderRadius: 16,
+        padding: wp(4),
+        borderWidth: 2,
+        borderColor: "rgba(34, 197, 94, 0.3)",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    refinedHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(2),
+    },
+    refinedTitle: {
+        fontSize: hp(2.1),
+        fontFamily: "SFNSDisplay-Heavy",
+        color: theme.colors.primary,
+    },
+    refineAgainBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(1.5),
+        paddingVertical: hp(0.8),
+        paddingHorizontal: wp(3),
+        backgroundColor: "white",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.primary,
+    },
+    refineAgainText: {
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Medium",
+        color: theme.colors.primary,
+    },
+
+    // Section Headers
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(2),
+        marginBottom: hp(0.5),
+    },
+    sectionTitle: {
+        fontSize: hp(1.9),
+        fontFamily: "SFNSDisplay-Bold",
+        color: theme.colors.textDark,
+    },
+
+    // Crop Cards
+    cropCard: {
+        backgroundColor: "#f8fafc",
+        borderRadius: 12,
+        padding: wp(3.5),
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        gap: hp(0.8),
+    },
+    cropHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(2),
+        marginBottom: hp(0.3),
+    },
+    cropRank: {
+        fontSize: hp(1.5),
+        fontFamily: "SFNSDisplay-Heavy",
+        color: "#22c55e",
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        paddingHorizontal: wp(2.5),
+        paddingVertical: hp(0.3),
+        borderRadius: 6,
+    },
+    cropName: {
+        fontSize: hp(1.9),
+        fontFamily: "SFNSDisplay-Bold",
+        color: theme.colors.textDark,
+        flex: 1,
+    },
+    cropReason: {
+        fontSize: hp(1.5),
+        fontFamily: "SFNSText-Regular",
+        color: theme.colors.textLight,
+        lineHeight: hp(2.1),
+    },
+    cropMetrics: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: wp(3),
+        marginTop: hp(0.5),
+    },
+    metricItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(1),
+    },
+    metricText: {
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Medium",
+        color: theme.colors.textDark,
+    },
+
+    // Avoid Crops
+    avoidCropCard: {
+        backgroundColor: "#fef2f2",
+        borderRadius: 10,
+        padding: wp(3),
+        borderWidth: 1,
+        borderColor: "#fecaca",
+        gap: hp(0.5),
+    },
+    avoidCropName: {
+        fontSize: hp(1.7),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#dc2626",
+    },
+    avoidCropReason: {
+        fontSize: hp(1.5),
+        fontFamily: "SFNSText-Regular",
+        color: "#991b1b",
+        lineHeight: hp(2),
+    },
+
+    // Tips
+    tipCard: {
+        flexDirection: "row",
+        gap: wp(3),
+        alignItems: "flex-start",
+    },
+    tipBullet: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: "#f59e0b",
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: hp(0.2),
+    },
+    tipBulletText: {
+        fontSize: hp(1.4),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "white",
+    },
+    tipText: {
+        flex: 1,
+        fontSize: hp(1.5),
+        fontFamily: "SFNSText-Regular",
+        color: theme.colors.textDark,
+        lineHeight: hp(2.1),
+    },
+
+    // Strategies
+    strategyCard: {
+        flexDirection: "row",
+        gap: wp(3),
+        alignItems: "flex-start",
+        backgroundColor: "#faf5ff",
+        padding: wp(3),
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "#e9d5ff",
+    },
+    strategyBullet: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: "#8b5cf6",
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: hp(0.2),
+    },
+    strategyText: {
+        flex: 1,
+        fontSize: hp(1.5),
+        fontFamily: "SFNSText-Regular",
+        color: theme.colors.textDark,
+        lineHeight: hp(2.1),
+    },
+    lastCard: {
+        marginBottom: 130,
+    }
 });
