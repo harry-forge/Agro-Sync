@@ -1,4 +1,4 @@
-// components/AskAIFab.jsx - REDESIGNED VERSION
+// components/AskAIFab.jsx - REDESIGNED VERSION (FIXED)
 import { useState } from "react";
 import {
     Modal,
@@ -70,10 +70,10 @@ export default function AskAIFab() {
                             />
                         </View>
                         {/*<Ionicons*/}
-                        {/*    name="sparkles"*/}
-                        {/*    size={28}*/}
-                        {/*    color="white"*/}
-                        {/*    style={styles.overlayIcon}*/}
+                        {/* name="sparkles"*/}
+                        {/* size={28}*/}
+                        {/* color="white"*/}
+                        {/* style={styles.overlayIcon}*/}
                         {/*/>*/}
                     </View>
                 </View>
@@ -88,8 +88,12 @@ export default function AskAIFab() {
                 animationType="slide"
                 statusBarTranslucent
             >
+                {/* ====================================================
+                  === FIX: behavior is set to "padding" for ALL platforms ===
+                  ====================================================
+                */}
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    behavior={Platform.OS === "ios" ? "padding" : "padding"}
                     style={styles.modalContainer}
                 >
                     <Pressable

@@ -26,7 +26,7 @@ const contributors = [
         id: '1',
         name: 'Harjinder Singh Saini',
         role: 'App Developer',
-        image: require('../../assets/contributors/harry.jpeg'),
+        image: require('../../assets/contributors/harry1.jpeg'),
         socials: [
             { icon: 'logo-github', url: 'https://github.com/harry-forge/' }, // Example URL
             { icon: 'logo-linkedin', url: 'https://www.linkedin.com/in/harjinder-singh-saini/' }, // Example URL
