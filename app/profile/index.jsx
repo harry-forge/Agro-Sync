@@ -12,17 +12,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BackButton from "../../components/BackButton";
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserData, updateProfile, uploadAvatar } from '../../services/userService';
-import {theme} from "../../constants/theme";
+import { theme } from "../../constants/theme";
+import { hp, wp } from "../../helpers/common"; // Import hp/wp
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
-import { useLayoutEffect } from "react";
-import { useNavigation } from "expo-router";
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-
+import LottieView from 'lottie-react-native'; // Import Lottie
+import { MotiView } from 'moti'; // Import Moti
 
 const Profile = () => {
     const { user, setUserData, logout } = useAuth();
@@ -71,6 +70,8 @@ const Profile = () => {
         }
     };
 
+    // ... (Image picking and upload functions remain unchanged) ...
+    // pickImage, uploadImage, pickFromGallery, pickFromCamera, removeProfilePhoto, showImageOptions
     const pickImage = async () => {
         try {
             // Request permission
@@ -238,6 +239,7 @@ const Profile = () => {
         );
     };
 
+
     const handleLogout = () => {
         Alert.alert(
             'Logout',
@@ -248,7 +250,7 @@ const Profile = () => {
                     text: 'Logout',
                     style: 'destructive',
                     onPress: async () => {
-                        setLoading(true);
+                        setLoading(true); // Use the main loader
                         const result = await logout();
                         if (result.success) {
                             router.replace('/welcome');
@@ -262,37 +264,27 @@ const Profile = () => {
         );
     };
 
-
     const menuItems = [
         {
             id: '1',
             title: 'Edit Profile',
+            subtitle: 'Update your name, bio, and info',
             icon: 'person-outline',
             onPress: () => router.push('/profile/edit'),
         },
         {
             id: '2',
             title: 'Notifications',
+            subtitle: 'Manage app notifications',
             icon: 'notifications-outline',
             onPress: () => Alert.alert('Coming Soon', 'Notifications feature will be available soon'),
         },
         {
             id: '3',
             title: 'Privacy & Security',
+            subtitle: 'Manage data and security settings',
             icon: 'shield-checkmark-outline',
             onPress: () => Alert.alert('Coming Soon', 'Privacy & Security settings coming soon'),
-        },
-        {
-            id: '4',
-            title: 'Help & Support',
-            icon: 'help-circle-outline',
-            onPress: () => Alert.alert('Coming Soon', 'Help & Support will be available soon'),
-        },
-        {
-            id: '5',
-            title: 'Settings',
-            icon: 'settings-outline',
-            onPress: () => Alert.alert('Coming Soon', 'Settings feature will be available soon'),
         },
     ];
 
@@ -304,29 +296,42 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#4299E1" />
-                    <Text style={styles.loadingText}>Loading profile...</Text>
-                </View>
+            <SafeAreaView style={styles.loadingScreenContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.loadingText}>Loading profile...</Text>
             </SafeAreaView>
         );
     }
 
     return (
         <SafeAreaView style={styles.container}>
+            {/* Renovated Premium Header */}
+            <MotiView
+                from={{ opacity: 0, translateY: -20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 600 }}
+                style={styles.header}
+            >
+                <View style={styles.headerContent}>
+                    <Text style={styles.headerTitle}>My Profile</Text>
+                    <Text style={styles.headerSubtitle}>
+                        Manage your account and settings
+                    </Text>
+                </View>
+                <View style={styles.headerIconBadge}>
+                    <LottieView
+                        source={require("../../assets/animations/user.json")} // Using user animation from home screen
+                        autoPlay
+                        loop
+                        style={styles.headerLottie}
+                    />
+                </View>
+            </MotiView>
 
-            {/* Header */}
-            <View style={styles.header}>
-                <BackButton router={router} />
-                <Text style={styles.headerTitle}>User Profile</Text>
-                <TouchableOpacity style={styles.settingsButton} onPress={() => Alert.alert('Coming Soon', 'In progress....')}>
-                    <Ionicons name="settings-outline" size={24} color="black" />
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContainer}
+            >
                 {/* Profile Info Card */}
                 <View style={styles.profileCard}>
                     <View style={styles.avatarContainer}>
@@ -363,10 +368,12 @@ const Profile = () => {
                     <View style={styles.userInfoContainer}>
                         <View style={styles.nameRow}>
                             <Text style={styles.userName}>{userData.name || 'User'}</Text>
-                            <Ionicons name="checkmark-circle" size={24} color="#4299E1" style={styles.verifiedIcon} />
+                            {/* === THEME UPDATE: Blue icon changed to green === */}
+                            <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} style={styles.verifiedIcon} />
                         </View>
+                        {/* === THEME UPDATE: Blue badge changed to green === */}
                         <View style={styles.emailBadge}>
-                            <Ionicons name="mail" size={12} color="#4299E1" />
+                            <Ionicons name="mail" size={12} color={theme.colors.primary} />
                             <Text style={styles.userEmail}>{userData.email}</Text>
                         </View>
                     </View>
@@ -374,7 +381,8 @@ const Profile = () => {
                     {/* Bio Section */}
                     <View style={styles.bioWrapper}>
                         <View style={styles.bioIconWrapper}>
-                            <Ionicons name="person-circle-outline" size={16} color="#4299E1" />
+                            {/* === THEME UPDATE: Blue icon changed to green === */}
+                            <Ionicons name="person-circle-outline" size={16} color={theme.colors.primary} />
                         </View>
                         <View style={styles.bioContainer}>
                             <Text style={styles.bioText}>{userData.bio}</Text>
@@ -382,31 +390,67 @@ const Profile = () => {
                     </View>
                 </View>
 
-                {/* Menu Items */}
-                <View style={styles.menuContainer}>
+                {/* === RENOVATED: Menu Items as Action Cards === */}
+                <View style={styles.menuSection}>
+                    <Text style={styles.sectionTitle}>Account</Text>
                     {menuItems.map((item) => (
                         <TouchableOpacity
                             key={item.id}
-                            style={styles.menuItem}
+                            style={styles.actionCard}
                             onPress={item.onPress}
                         >
-
-                            <View style={styles.menuItemLeft}>
-                                <Ionicons name={item.icon} size={24} color="#4A5568" />
-                                <Text style={styles.menuItemText}>{item.title}</Text>
+                            <View style={styles.actionIconContainer}>
+                                <Ionicons name={item.icon} size={24} color="#16a34a" />
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="#A0AEC0" />
+                            <View style={styles.actionContent}>
+                                <Text style={styles.actionTitle}>{item.title}</Text>
+                                <Text style={styles.actionSubtitle}>{item.subtitle}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* Logout Button */}
+                <View style={styles.menuSection}>
+                    <Text style={styles.sectionTitle}>More</Text>
+                    <TouchableOpacity
+                        style={styles.actionCard}
+                        onPress={() => router.push('/help')}
+                    >
+                        <View style={styles.actionIconContainer}>
+                            <Ionicons name="help-circle-outline" size={24} color="#16a34a" />
+                        </View>
+                        <View style={styles.actionContent}>
+                            <Text style={styles.actionTitle}>Help & Support</Text>
+                            <Text style={styles.actionSubtitle}>Get help with the app</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    {/* === ADD THIS BUTTON === */}
+                    <TouchableOpacity
+                        style={styles.actionCard}
+                        onPress={() => router.push('/profile/contributors')}
+                    >
+                        <View style={styles.actionIconContainer}>
+                            <Ionicons name="people-outline" size={24} color="#16a34a" />
+                        </View>
+                        <View style={styles.actionContent}>
+                            <Text style={styles.actionTitle}>Contributors</Text>
+                            <Text style={styles.actionSubtitle}>See who built this app</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {/* === END OF ADDED BUTTON === */}
+                </View>
+
+                {/* Logout Button (remains the same, style is good) */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={24} color="#E53E3E" />
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
 
-                {/* Footer */}
+                {/* Footer (remains the same) */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>Member since {formatDate(userData.created_at)}</Text>
                     <Text style={styles.versionText}>Version 1.0.0</Text>
@@ -419,55 +463,83 @@ const Profile = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#edecec',
+        backgroundColor: '#f8fafb', // === THEME UPDATE: Background color
     },
-    loadingContainer: {
+    loadingScreenContainer: { // Renamed from loadingContainer to avoid conflict
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f8fafb',
     },
     loadingText: {
         marginTop: 12,
         fontSize: 16,
         color: '#718096',
+        fontFamily: 'SFNSText-Regular',
     },
+    scrollContainer: {
+        paddingBottom: hp(4),
+    },
+
+    // ===== NEW HEADER STYLES =====
     header: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        backgroundColor: '#fff',
+        alignItems: 'center',
+        paddingHorizontal: wp(5),
+        paddingTop: hp(2),
+        paddingBottom: hp(3),
+        backgroundColor: 'white',
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F3F5',
+        borderBottomColor: '#f1f5f9',
+    },
+    headerContent: {
+        flex: 1,
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#2D3748',
-        letterSpacing: 0.3,
+        fontSize: hp(2.4),
+        fontFamily: "SFNSDisplay-Bold",
+        color: theme.colors.textDark,
     },
-    settingsButton: {
-        width: 40,
-        height: 40,
+    headerSubtitle: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: '#64748b',
+        marginTop: hp(0.5),
+    },
+    headerIconBadge: {
+        width: wp(12),
+        height: wp(12),
+        borderRadius: wp(6),
+        backgroundColor: '#f0fdf4',
         justifyContent: 'center',
         alignItems: 'center',
-        opacity: 0.7,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        marginLeft: wp(4),
     },
+    headerLottie: {
+        width: wp(8),
+        height: wp(8),
+    },
+
+    // Profile Card Styles (with theme updates)
     profileCard: {
         backgroundColor: '#fff',
-        marginHorizontal: 20,
-        marginTop: 20,
+        marginHorizontal: wp(5),
+        marginTop: hp(2.5),
         borderRadius: 20,
         paddingTop: 32,
         paddingBottom: 24,
         paddingHorizontal: 20,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 6,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
     },
     avatarContainer: {
         position: 'relative',
@@ -477,14 +549,14 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        borderWidth: 3,
-        borderColor: 'rgba(35,119,62,0.53)',
+        borderWidth: 4, // Increased border
+        borderColor: '#bbf7d0', // === THEME UPDATE: Green border
     },
     editAvatarButton: {
         position: 'absolute',
         bottom: 2,
         right: 2,
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.primary, // This is already green
         width: 38,
         height: 38,
         borderRadius: 19,
@@ -504,7 +576,7 @@ const styles = StyleSheet.create({
     },
     userName: {
         fontSize: 26,
-        fontWeight: '700',
+        fontFamily: 'SFNSDisplay-Bold', // Use custom font
         color: '#1A202C',
         letterSpacing: -0.5,
     },
@@ -514,7 +586,7 @@ const styles = StyleSheet.create({
     emailBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#EBF5FF',
+        backgroundColor: '#f0fdf4', // === THEME UPDATE: Light green
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 16,
@@ -522,8 +594,8 @@ const styles = StyleSheet.create({
     },
     userEmail: {
         fontSize: 13,
-        color: '#2B6CB0',
-        fontWeight: '600',
+        color: '#15803d', // === THEME UPDATE: Dark green
+        fontFamily: 'SFNSText-Medium', // Use custom font
     },
     bioWrapper: {
         width: '100%',
@@ -537,77 +609,103 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#E8F4FD',
+        borderWidth: 1,
+        borderColor: '#f1f5f9', // === THEME UPDATE
         marginBottom: -16,
         zIndex: 1,
     },
     bioContainer: {
         width: '100%',
-        backgroundColor: '#FAFBFC',
+        backgroundColor: '#f8fafc', // === THEME UPDATE
         borderRadius: 16,
         padding: 18,
         paddingTop: 26,
         borderWidth: 1,
-        borderColor: '#E8EDF2',
+        borderColor: '#f1f5f9', // === THEME UPDATE
     },
     bioText: {
         fontSize: 14,
         color: '#4A5568',
         lineHeight: 22,
         textAlign: 'center',
+        fontFamily: 'SFNSText-Regular',
     },
-    menuContainer: {
-        backgroundColor: '#fff',
-        marginHorizontal: 20,
-        marginTop: 20,
+
+    // ===== RENOVATED Menu Section =====
+    menuSection: {
+        marginTop: hp(3),
+        paddingHorizontal: wp(5),
+        gap: hp(1.5),
+    },
+    sectionTitle: {
+        fontSize: hp(1.8),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: '#64748b',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: hp(0.5),
+    },
+    actionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: wp(4),
         borderRadius: 16,
-        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.04,
         shadowRadius: 8,
-        elevation: 3,
+        elevation: 2,
     },
-    menuItem: {
-        flexDirection: 'row',
+    actionIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#f0fdf4',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        marginRight: wp(3),
     },
-    menuItemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    actionContent: {
+        flex: 1,
     },
-    menuItemText: {
-        fontSize: 16,
-        color: '#2D3748',
-        marginLeft: 16,
-        fontWeight: '500',
+    actionTitle: {
+        fontSize: hp(1.7),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: '#0f172a',
+        marginBottom: hp(0.2),
     },
+    actionSubtitle: {
+        fontSize: hp(1.3),
+        fontFamily: 'SFNSText-Regular',
+        color: '#64748b',
+    },
+
+    // Original Logout/Footer
     logoutButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#fff',
-        marginHorizontal: 20,
-        marginTop: 20,
+        marginHorizontal: wp(5),
+        marginTop: hp(3),
         paddingVertical: 16,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#FEB2B2',
-        shadowColor: '#000',
+        shadowColor: '#E53E3E',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 3,
     },
     logoutText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'SFNSDisplay-Bold',
         color: '#E53E3E',
         marginLeft: 12,
     },
@@ -620,10 +718,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#718096',
         marginBottom: 4,
+        fontFamily: 'SFNSText-Regular',
     },
     versionText: {
         fontSize: 12,
         color: '#A0AEC0',
+        fontFamily: 'SFNSText-Regular',
     },
 });
 

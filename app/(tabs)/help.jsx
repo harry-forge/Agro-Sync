@@ -1,5 +1,5 @@
 // ============================================
-// app/(tabs)/help.jsx  – Help Tab (Redesigned)
+// app/(tabs)/help.jsx  – (Renovated)
 // ============================================
 
 import { useState } from "react";
@@ -11,6 +11,7 @@ import {
     Pressable,
     TextInput,
     ActivityIndicator,
+    Animated, // Added for Accordion animation
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import LottieView from "lottie-react-native";
@@ -19,6 +20,7 @@ import { theme } from "../../constants/theme";
 import { hp, wp } from "../../helpers/common";
 import { helpAnswer } from "../../services/geminiService";
 import { useFieldData } from "../../contexts/FieldContext";
+import { MotiView } from 'moti'; // Import MotiView for animations
 
 export default function Help() {
     const { fieldData } = useFieldData();
@@ -43,18 +45,48 @@ export default function Help() {
     };
 
     return (
-        <ScreenWrapper bg="white">
-            <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.pageTitle}>Help</Text>
+        <ScreenWrapper bg="#f8fafb">
+            {/* Premium Header (like home.jsx) */}
+            <MotiView
+                from={{ opacity: 0, translateY: -20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 600 }}
+                style={styles.header}
+            >
+                <View style={styles.headerContent}>
+                    <Text style={styles.headerTitle}>Help & Support</Text>
+                    <Text style={styles.headerSubtitle}>
+                        FAQ, guides, and AI assistance
+                    </Text>
+                </View>
+                <View style={styles.headerIconBadge}>
+                    {/* NOTE: You will need to add a support.json/help animation file */}
+                    <LottieView
+                        source={require("../../assets/animations/support.json")} // <-- Add this animation
+                        autoPlay
+                        loop
+                        style={styles.headerLottie}
+                    />
+                </View>
+            </MotiView>
 
-                <Accordion title="About AgroSync" defaultOpen>
+            <ScrollView contentContainerStyle={styles.container}>
+                {/* Renovated Accordions */}
+                <Accordion
+                    title="About AgroSync"
+                    icon="information-circle-outline"
+                    defaultOpen
+                >
                     <Text style={styles.bodyText}>
                         AgroSync uses IoT + Weather + AI (Gemini + Crop Recommender Engine)
                         to assist farmers with crop planning decisions.
                     </Text>
                 </Accordion>
 
-                <Accordion title="Understanding Sensor Data">
+                <Accordion
+                    title="Understanding Sensor Data"
+                    icon="thermometer-outline"
+                >
                     <Text style={styles.bodyText}>
                         Temperature & Humidity come from your IoT device.
                         {"\n"}Rainfall (mm) is fetched from weather API.
@@ -62,21 +94,24 @@ export default function Help() {
                     </Text>
                 </Accordion>
 
-                <Accordion title="NPK & Soil pH Explained">
+                <Accordion title="NPK & Soil pH Explained" icon="leaf-outline">
                     <Text style={styles.bodyText}>
                         AgroSync estimates these using AI based on current field
                         environment. Values are used by the recommendation engine.
                     </Text>
                 </Accordion>
 
-                <Accordion title="How Crop Recommendation Works">
+                <Accordion
+                    title="How Crop Recommendation Works"
+                    icon="analytics-outline"
+                >
                     <Text style={styles.bodyText}>
                         Your N,P,K,pH + Temperature, Humidity, Moisture & Rainfall are sent
                         to ML model which returns best possible crop today.
                     </Text>
                 </Accordion>
 
-                {/* ASK AI - REDESIGNED TO MATCH FAB MODAL */}
+                {/* ASK AI - This card was already premium, so it's unchanged */}
                 <View style={styles.aiCard}>
                     {/* Header Section */}
                     <View style={styles.aiHeader}>
@@ -86,12 +121,6 @@ export default function Help() {
                                 autoPlay
                                 loop
                                 style={styles.lottieAnimation}
-                                // colorFilters={[
-                                //     {
-                                //         keypath: "*",
-                                //         color: "#ffffff"
-                                //     }
-                                // ]}
                             />
                         </View>
                         <View style={styles.headerText}>
@@ -206,52 +235,154 @@ export default function Help() {
     );
 }
 
-// --- Accordion ---
-function Accordion({ title, children, defaultOpen = false }) {
+// --- Accordion (Renovated) ---
+function Accordion({ title, icon, children, defaultOpen = false }) {
     const [open, setOpen] = useState(defaultOpen);
+    const spinAnim = new Animated.Value(open ? 1 : 0);
+
+    const toggleOpen = () => {
+        const toValue = open ? 0 : 1;
+        setOpen(!open);
+        Animated.timing(spinAnim, {
+            toValue: toValue,
+            duration: 200,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const spin = spinAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '90deg'],
+    });
+
     return (
-        <View style={styles.card}>
+        <View style={styles.accordionContainer}>
             <Pressable
-                onPress={() => setOpen(!open)}
-                style={{ flexDirection: "row", justifyContent: "space-between" }}
+                style={({ pressed }) => [
+                    styles.actionCard,
+                    pressed && styles.actionCardPressed
+                ]}
+                onPress={toggleOpen}
             >
-                <Text style={styles.cardTitle}>{title}</Text>
-                <Text style={styles.chevron}>{open ? "▾" : "▸"}</Text>
+                <View style={styles.actionIconContainer}>
+                    <Ionicons name={icon} size={24} color="#16a34a" />
+                </View>
+                <View style={styles.actionContent}>
+                    <Text style={styles.actionTitle}>{title}</Text>
+                </View>
+                <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                    <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+                </Animated.View>
             </Pressable>
-            {open && <View style={{ marginTop: hp(0.8) }}>{children}</View>}
+
+            {open && (
+                <View style={styles.accordionContent}>
+                    {children}
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    // ===== NEW HEADER STYLES =====
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingHorizontal: wp(5),
         paddingTop: hp(2),
-        paddingBottom: hp(12),
-        gap: hp(2),
+        paddingBottom: hp(3),
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f1f5f9',
     },
-    pageTitle: {
+    headerContent: {
+        flex: 1,
+    },
+    headerTitle: {
         fontSize: hp(2.4),
         fontFamily: "SFNSDisplay-Bold",
         color: theme.colors.textDark,
     },
-    card: {
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: wp(4),
-        borderWidth: 1,
-        borderColor: "rgba(80,200,120,0.12)",
-        shadowColor: "rgb(2,57,18)",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 6,
-        gap: hp(1),
+    headerSubtitle: {
+        fontSize: hp(1.4),
+        fontFamily: 'SFNSText-Regular',
+        color: '#64748b',
+        marginTop: hp(0.5),
     },
-    cardTitle: {
-        fontSize: hp(2),
-        fontFamily: "SFNSDisplay-Bold",
-        color: theme.colors.textDark,
+    headerIconBadge: {
+        width: wp(12),
+        height: wp(12),
+        borderRadius: wp(6),
+        backgroundColor: '#f0fdf4',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        marginLeft: wp(4),
+    },
+    headerLottie: {
+        width: wp(8),
+        height: wp(8),
+    },
+
+    // ===== CONTAINER =====
+    container: {
+        paddingHorizontal: wp(5),
+        paddingTop: hp(2.5), // Added space from new header
+        paddingBottom: hp(12),
+        gap: hp(1.5), // Reduced gap for accordion style
+    },
+
+    // ===== RENOVATED ACCORDION STYLES =====
+    accordionContainer: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
+        overflow: 'hidden', // Ensures content clips to border radius
+    },
+    actionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        paddingVertical: hp(1.5),
+        paddingHorizontal: wp(4),
+    },
+    actionCardPressed: {
+        backgroundColor: '#f8fafc',
+    },
+    actionIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#f0fdf4',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        marginRight: wp(3),
+    },
+    actionContent: {
+        flex: 1,
+    },
+    actionTitle: {
+        fontSize: hp(1.7), // Slightly larger for clarity
+        fontFamily: 'SFNSDisplay-Bold',
+        color: '#0f172a',
+    },
+    accordionContent: {
+        padding: wp(4),
+        paddingTop: hp(1),
+        backgroundColor: '#fdfdfd',
+        borderTopWidth: 1,
+        borderTopColor: '#f1f5f9',
     },
     bodyText: {
         fontSize: hp(1.6),
@@ -259,12 +390,9 @@ const styles = StyleSheet.create({
         color: theme.colors.textDark,
         lineHeight: hp(2.3),
     },
-    chevron: {
-        fontSize: hp(2.2),
-        color: theme.colors.textLight,
-    },
 
-    // ===== ASK AI CARD STYLES (MATCHING FAB MODAL) =====
+    // ===== (Original) ASK AI CARD STYLES (MATCHING FAB MODAL) =====
+    // (These are unchanged as they are already premium)
     aiCard: {
         backgroundColor: "#ffffff",
         borderRadius: 20,

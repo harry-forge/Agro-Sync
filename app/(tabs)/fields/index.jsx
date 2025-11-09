@@ -86,7 +86,7 @@ export default function FieldsIndex() {
                             pressed && styles.addFieldCardPressed
                         ]}
                         onPress={() =>
-                            Alert.alert("Coming Soon", "Multiple fields support is coming soon!")
+                            Alert.alert("Coming Soon", "Multiple fields support.json is coming soon!")
                         }
                     >
                         <View style={styles.addIconContainer}>

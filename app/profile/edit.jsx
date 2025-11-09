@@ -323,6 +323,15 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#E2E8F0',
     },
+    // This container is used to center the title
+    headerTitleContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        // Make sure it doesn't overlap buttons
+        zIndex: -1,
+    },
     headerTitle: {
         fontSize: 20,
         fontWeight: '600',
