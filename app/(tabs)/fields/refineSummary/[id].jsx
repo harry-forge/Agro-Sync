@@ -1,3 +1,5 @@
+// app/(tabs)/fields/refineSummary/[id].jsx
+
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFieldData } from "../../../../contexts/FieldContext";
@@ -29,7 +31,7 @@ export default function RefineSummary() {
             </View>
 
             <ScrollView contentContainerStyle={styles.container}>
-                {/* Banner */}
+                {/* Banner - UNCHANGED */}
                 <MotiView
                     from={{ opacity: 0, translateY: -20 }}
                     animate={{ opacity: 1, translateY: 0 }}
@@ -56,7 +58,7 @@ export default function RefineSummary() {
                     </View>
                 </MotiView>
 
-                {/* Sensor Snapshot */}
+                {/* Sensor Snapshot - UNCHANGED */}
                 <MotiView
                     from={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -102,88 +104,89 @@ export default function RefineSummary() {
                     </MotiView>
                 ) : (
                     <>
-                        {/* Top Crops */}
+                        {/* PREMIUM TOP CROPS SECTION */}
                         <MotiView
                             from={{ opacity: 0, translateY: 40 }}
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ delay: 250 }}
-                            style={styles.sectionCard}
                         >
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="leaf" size={20} color="#16a34a" />
-                                <Text style={styles.sectionTitle}>Top Crop Recommendations</Text>
-                            </View>
-                            {refined.topCrops.map((c, idx) => (
-                                <View key={idx} style={[styles.cropCard, idx === 0 && styles.cropCardPrimary]}>
-                                    <View style={styles.cropHeader}>
-                                        <Text style={styles.cropRank}>#{idx + 1}</Text>
-                                        <Text style={styles.cropName}>{c.name}</Text>
-                                    </View>
-                                    <Text style={styles.cropReason}>{c.reason}</Text>
-                                    <View style={styles.cropMetrics}>
-                                        <Metric icon="trending-up" text={c.expectedYield} color="#22c55e" />
-                                        <Metric icon="cash-outline" text={c.estimatedProfit} color="#22c55e" />
-                                        <Metric icon="time-outline" text={c.growingPeriod} color="#64748b" />
-                                    </View>
+                            <View style={styles.premiumSectionHeader}>
+                                <View style={styles.premiumIconBadge}>
+                                    <Ionicons name="trophy" size={20} color="#f59e0b" />
                                 </View>
-                            ))}
+                                <Text style={styles.premiumSectionTitle}>Top Crop Recommendations</Text>
+                            </View>
+
+                            <View style={styles.cropsContainer}>
+                                {refined.topCrops.map((crop, idx) => (
+                                    <PremiumCropCard
+                                        key={idx}
+                                        crop={crop}
+                                        rank={idx + 1}
+                                        isPrimary={idx === 0}
+                                    />
+                                ))}
+                            </View>
                         </MotiView>
 
-                        {/* Crops to Avoid */}
+                        {/* PREMIUM CROPS TO AVOID */}
                         <MotiView
                             from={{ opacity: 0, translateY: 40 }}
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ delay: 350 }}
-                            style={styles.sectionCard}
                         >
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="close-circle" size={20} color="#ef4444" />
-                                <Text style={styles.sectionTitle}>Crops to Avoid</Text>
-                            </View>
-                            {refined.avoidCrops.map((c, idx) => (
-                                <View key={idx} style={styles.avoidCard}>
-                                    <Text style={styles.avoidName}>{c.name}</Text>
-                                    <Text style={styles.avoidReason}>{c.reason}</Text>
+                            <View style={styles.premiumSectionHeader}>
+                                <View style={[styles.premiumIconBadge, { backgroundColor: "#fef2f2" }]}>
+                                    <Ionicons name="warning" size={20} color="#dc2626" />
                                 </View>
-                            ))}
+                                <Text style={styles.premiumSectionTitle}>Crops to Avoid</Text>
+                            </View>
+
+                            <View style={styles.avoidContainer}>
+                                {refined.avoidCrops.map((crop, idx) => (
+                                    <PremiumAvoidCard key={idx} crop={crop} />
+                                ))}
+                            </View>
                         </MotiView>
 
-                        {/* Soil Improvements */}
+                        {/* PREMIUM SOIL IMPROVEMENTS */}
                         <MotiView
                             from={{ opacity: 0, translateY: 40 }}
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ delay: 450 }}
-                            style={styles.sectionCard}
                         >
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="flask" size={20} color="#f59e0b" />
-                                <Text style={styles.sectionTitle}>Soil Improvement Tips</Text>
-                            </View>
-                            {refined.soilImprovements.map((t, idx) => (
-                                <View key={idx} style={styles.tipRow}>
-                                    <View style={styles.tipBullet}><Text style={styles.tipBulletText}>{idx + 1}</Text></View>
-                                    <Text style={styles.tipText}>{t}</Text>
+                            <View style={styles.premiumSectionHeader}>
+                                <View style={[styles.premiumIconBadge, { backgroundColor: "#fef3c7" }]}>
+                                    <Ionicons name="leaf" size={20} color="#d97706" />
                                 </View>
-                            ))}
+                                <Text style={styles.premiumSectionTitle}>Soil Enhancement</Text>
+                            </View>
+
+                            <View style={styles.improvementsCard}>
+                                {refined.soilImprovements.map((tip, idx) => (
+                                    <PremiumTipItem key={idx} tip={tip} index={idx} />
+                                ))}
+                            </View>
                         </MotiView>
 
-                        {/* Profit Strategies */}
+                        {/* PREMIUM PROFIT STRATEGIES */}
                         <MotiView
                             from={{ opacity: 0, translateY: 40 }}
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ delay: 550 }}
-                            style={styles.sectionCard}
                         >
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="bulb" size={20} color="#8b5cf6" />
-                                <Text style={styles.sectionTitle}>Profit Maximization</Text>
-                            </View>
-                            {refined.profitStrategies.map((p, idx) => (
-                                <View key={idx} style={styles.strategyRow}>
-                                    <View style={styles.strategyBullet}><Ionicons name="checkmark" size={14} color="white" /></View>
-                                    <Text style={styles.strategyText}>{p}</Text>
+                            <View style={styles.premiumSectionHeader}>
+                                <View style={[styles.premiumIconBadge, { backgroundColor: "#faf5ff" }]}>
+                                    <Ionicons name="trending-up" size={20} color="#8b5cf6" />
                                 </View>
-                            ))}
+                                <Text style={styles.premiumSectionTitle}>Profit Maximization</Text>
+                            </View>
+
+                            <View style={styles.strategiesCard}>
+                                {refined.profitStrategies.map((strategy, idx) => (
+                                    <PremiumStrategyItem key={idx} strategy={strategy} />
+                                ))}
+                            </View>
                         </MotiView>
 
                         {/* Refine Again CTA */}
@@ -207,6 +210,115 @@ export default function RefineSummary() {
     );
 }
 
+// PREMIUM CROP CARD COMPONENT
+function PremiumCropCard({ crop, rank, isPrimary }) {
+    return (
+        <View style={[styles.premiumCropCard, isPrimary && styles.primaryCropCard]}>
+            {/* Header with Rank Badge */}
+            <View style={styles.cropCardHeader}>
+                <View style={[styles.rankBadge, isPrimary && styles.primaryRankBadge]}>
+                    <Ionicons
+                        name={isPrimary ? "trophy" : "leaf"}
+                        size={16}
+                        color="white"
+                    />
+                    <Text style={styles.rankText}>#{rank}</Text>
+                </View>
+                <View style={styles.cropNameContainer}>
+                    <Text style={[styles.cropCardName, isPrimary && styles.primaryCropName]}>
+                        {crop.name}
+                    </Text>
+                    {isPrimary && (
+                        <View style={styles.bestChoicePill}>
+                            <Text style={styles.bestChoiceText}>BEST CHOICE</Text>
+                        </View>
+                    )}
+                </View>
+            </View>
+
+            {/* Reason */}
+            <Text style={styles.cropCardReason}>{crop.reason}</Text>
+
+            {/* Metrics Grid */}
+            <View style={styles.metricsGrid}>
+                <MetricPill
+                    icon="analytics"
+                    label="Yield"
+                    value={crop.expectedYield}
+                    color="#10b981"
+                />
+                <MetricPill
+                    icon="cash"
+                    label="Profit"
+                    value={crop.estimatedProfit}
+                    color="#f59e0b"
+                />
+                <MetricPill
+                    icon="time"
+                    label="Duration"
+                    value={crop.growingPeriod}
+                    color="#6366f1"
+                />
+            </View>
+        </View>
+    );
+}
+
+// METRIC PILL COMPONENT
+function MetricPill({ icon, label, value, color }) {
+    return (
+        <View style={[styles.metricPill, { borderColor: color + "30" }]}>
+            <View style={[styles.metricIconSmall, { backgroundColor: color + "15" }]}>
+                <Ionicons name={icon} size={14} color={color} />
+            </View>
+            <View style={styles.metricContent}>
+                <Text style={styles.metricLabel}>{label}</Text>
+                <Text style={[styles.metricValue, { color }]}>{value}</Text>
+            </View>
+        </View>
+    );
+}
+
+// PREMIUM AVOID CARD
+function PremiumAvoidCard({ crop }) {
+    return (
+        <View style={styles.premiumAvoidCard}>
+            <View style={styles.avoidHeader}>
+                <View style={styles.avoidIconBadge}>
+                    <Ionicons name="close" size={16} color="#dc2626" />
+                </View>
+                <Text style={styles.avoidCardName}>{crop.name}</Text>
+            </View>
+            <Text style={styles.avoidCardReason}>{crop.reason}</Text>
+        </View>
+    );
+}
+
+// PREMIUM TIP ITEM
+function PremiumTipItem({ tip, index }) {
+    return (
+        <View style={styles.tipItem}>
+            <View style={styles.tipNumber}>
+                <Text style={styles.tipNumberText}>{index + 1}</Text>
+            </View>
+            <Text style={styles.tipItemText}>{tip}</Text>
+        </View>
+    );
+}
+
+// PREMIUM STRATEGY ITEM
+function PremiumStrategyItem({ strategy }) {
+    return (
+        <View style={styles.strategyItem}>
+            <View style={styles.strategyCheck}>
+                <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />
+            </View>
+            <Text style={styles.strategyItemText}>{strategy}</Text>
+        </View>
+    );
+}
+
+// SENSOR ITEM - UNCHANGED
 function SensorItem({ label, value, icon }) {
     return (
         <View style={styles.sensorItem}>
@@ -219,16 +331,8 @@ function SensorItem({ label, value, icon }) {
     );
 }
 
-function Metric({ icon, text, color }) {
-    return (
-        <View style={styles.metricItem}>
-            <Ionicons name={icon} size={16} color={color} />
-            <Text style={styles.metricText}>{text}</Text>
-        </View>
-    );
-}
-
 const styles = StyleSheet.create({
+    // UNCHANGED STYLES
     header: {
         paddingHorizontal: wp(5),
         paddingTop: hp(2),
@@ -360,61 +464,214 @@ const styles = StyleSheet.create({
         fontFamily: "SFNSDisplay-Bold",
         fontSize: hp(1.6),
     },
-    sectionCard: {
-        backgroundColor: "#fff",
+
+    // NEW PREMIUM STYLES
+    premiumSectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(3),
+        marginBottom: hp(1.5),
+        marginTop: hp(1),
+    },
+    premiumIconBadge: {
+        width: 40,
+        height: 40,
         borderRadius: 12,
-        padding: wp(3.5),
-        borderWidth: 1,
-        borderColor: "rgba(0,0,0,0.05)",
-        gap: hp(1),
+        backgroundColor: "#fffbeb",
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#f59e0b",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
     },
-    sectionHeader: { flexDirection: "row", alignItems: "center", gap: wp(2), marginBottom: hp(0.6) },
-    sectionTitle: { fontSize: hp(1.7), fontFamily: "SFNSDisplay-Bold", color: theme.colors.textDark },
-    cropCard: {
-        backgroundColor: "#f8fafc",
-        borderRadius: 10,
-        padding: wp(3),
-        marginBottom: hp(1),
-        borderWidth: 1,
-        borderColor: "#e6eef5",
-        gap: hp(0.6),
+    premiumSectionTitle: {
+        fontSize: hp(2),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#0f172a",
+        flex: 1,
     },
-    cropCardPrimary: {
-        backgroundColor: "#ecfccb",
-        borderColor: "#d9f99d",
-        shadowColor: "#65a30d",
-        shadowOffset: { width: 0, height: 8 },
+
+    // CROP CARDS
+    cropsContainer: {
+        gap: hp(1.5),
+    },
+    premiumCropCard: {
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: wp(4),
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.06,
-        shadowRadius: 14,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    primaryCropCard: {
+        backgroundColor: "#fefce8",
+        borderColor: "#fde047",
+        borderWidth: 2,
+        shadowColor: "#eab308",
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
         elevation: 8,
     },
-    cropHeader: { flexDirection: "row", alignItems: "center", gap: wp(2) },
-    cropRank: {
-        fontSize: hp(1.4),
-        fontFamily: "SFNSDisplay-Heavy",
-        color: "#16a34a",
-        backgroundColor: "rgba(16,185,129,0.08)",
-        paddingHorizontal: wp(2.2),
+    cropCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(3),
+        marginBottom: hp(1.2),
+    },
+    rankBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(1),
+        backgroundColor: "#10b981",
+        paddingHorizontal: wp(2.5),
+        paddingVertical: hp(0.6),
+        borderRadius: 10,
+    },
+    primaryRankBadge: {
+        backgroundColor: "#f59e0b",
+    },
+    rankText: {
+        fontSize: hp(1.3),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "white",
+    },
+    cropNameContainer: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(2),
+    },
+    cropCardName: {
+        fontSize: hp(1.9),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#0f172a",
+    },
+    primaryCropName: {
+        color: "#92400e",
+    },
+    bestChoicePill: {
+        backgroundColor: "#16a34a",
+        paddingHorizontal: wp(2),
         paddingVertical: hp(0.3),
         borderRadius: 6,
     },
-    cropName: { fontSize: hp(1.6), fontFamily: "SFNSDisplay-Bold", color: theme.colors.textDark, flex: 1 },
-    cropReason: { fontSize: hp(1.4), color: theme.colors.textLight, fontFamily: "SFNSText-Regular" },
-    cropMetrics: { flexDirection: "row", flexWrap: "wrap", gap: wp(3), marginTop: hp(0.5) },
-    metricItem: { flexDirection: "row", alignItems: "center", gap: wp(1) },
-    metricText: { fontSize: hp(1.4), fontFamily: "SFNSText-Medium", color: theme.colors.textDark },
-    avoidCard: {
-        backgroundColor: "#fff5f5",
-        borderRadius: 10,
-        padding: wp(3),
-        borderWidth: 1,
-        borderColor: "#ffdadb",
-        marginBottom: hp(1),
+    bestChoiceText: {
+        fontSize: hp(0.9),
+        fontFamily: "SFNSDisplay-Heavy",
+        color: "white",
+        letterSpacing: 0.5,
     },
-    avoidName: { fontSize: hp(1.5), fontFamily: "SFNSDisplay-Bold", color: "#dc2626" },
-    avoidReason: { fontSize: hp(1.3), color: "#991b1b", marginTop: hp(0.4) },
-    tipRow: { flexDirection: "row", gap: wp(3), alignItems: "flex-start", marginBottom: hp(0.8) },
-    tipBullet: {
+    cropCardReason: {
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Regular",
+        color: "#64748b",
+        lineHeight: hp(2),
+        marginBottom: hp(1.2),
+    },
+    metricsGrid: {
+        flexDirection: "row",
+        gap: wp(2),
+    },
+    metricPill: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(1.5),
+        backgroundColor: "#fafafa",
+        padding: wp(2),
+        borderRadius: 10,
+        borderWidth: 1,
+    },
+    metricIconSmall: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    metricContent: {
+        flex: 1,
+    },
+    metricLabel: {
+        fontSize: hp(1),
+        fontFamily: "SFNSText-Medium",
+        color: "#94a3b8",
+    },
+    metricValue: {
+        fontSize: hp(1.3),
+        fontFamily: "SFNSDisplay-Bold",
+        marginTop: hp(0.1),
+    },
+
+    // AVOID CARDS
+    avoidContainer: {
+        gap: hp(1.2),
+    },
+    premiumAvoidCard: {
+        backgroundColor: "#fff5f5",
+        borderRadius: 14,
+        padding: wp(3.5),
+        borderWidth: 1,
+        borderLeftWidth: 4,
+        borderColor: "#fecaca",
+        borderLeftColor: "#dc2626",
+    },
+    avoidHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: wp(2),
+        marginBottom: hp(0.6),
+    },
+    avoidIconBadge: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: "#fee2e2",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    avoidCardName: {
+        fontSize: hp(1.6),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "#dc2626",
+    },
+    avoidCardReason: {
+        fontSize: hp(1.3),
+        fontFamily: "SFNSText-Regular",
+        color: "#991b1b",
+        lineHeight: hp(1.9),
+        marginLeft: wp(8),
+    },
+
+    // IMPROVEMENTS
+    improvementsCard: {
+        backgroundColor: "white",
+        borderRadius: 16,
+        padding: wp(4),
+        gap: hp(1.2),
+        borderWidth: 1,
+        borderColor: "#fef3c7",
+        shadowColor: "#f59e0b",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    tipItem: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: wp(3),
+        backgroundColor: "#fffbeb",
+        padding: wp(3),
+        borderRadius: 12,
+    },
+    tipNumber: {
         width: 28,
         height: 28,
         borderRadius: 14,
@@ -422,23 +679,52 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    tipBulletText: { color: "white", fontFamily: "SFNSDisplay-Bold" },
-    tipText: { flex: 1, fontSize: hp(1.4), color: theme.colors.textDark },
-    strategyRow: {
+    tipNumberText: {
+        fontSize: hp(1.3),
+        fontFamily: "SFNSDisplay-Bold",
+        color: "white",
+    },
+    tipItemText: {
+        flex: 1,
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Regular",
+        color: "#78350f",
+        lineHeight: hp(2),
+    },
+
+    // STRATEGIES
+    strategiesCard: {
+        backgroundColor: "white",
+        borderRadius: 16,
+        padding: wp(4),
+        gap: hp(1.2),
+        borderWidth: 1,
+        borderColor: "#f3e8ff",
+        shadowColor: "#8b5cf6",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    strategyItem: {
         flexDirection: "row",
-        gap: wp(3),
         alignItems: "center",
+        gap: wp(3),
         backgroundColor: "#faf5ff",
         padding: wp(3),
-        borderRadius: 8,
+        borderRadius: 12,
     },
-    strategyBullet: {
-        width: 30,
-        height: 30,
-        borderRadius: 8,
-        backgroundColor: "#8b5cf6",
+    strategyCheck: {
+        width: 28,
+        height: 28,
         alignItems: "center",
         justifyContent: "center",
     },
-    strategyText: { fontSize: hp(1.4), color: theme.colors.textDark, flex: 1 },
+    strategyItemText: {
+        flex: 1,
+        fontSize: hp(1.4),
+        fontFamily: "SFNSText-Regular",
+        color: "#581c87",
+        lineHeight: hp(2),
+    },
 });

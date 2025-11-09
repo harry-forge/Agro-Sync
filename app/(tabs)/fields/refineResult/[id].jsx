@@ -1,3 +1,6 @@
+//app/(tabs)/fields/refineResult/[id].jsx
+
+
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
