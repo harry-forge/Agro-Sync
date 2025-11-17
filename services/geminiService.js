@@ -4,7 +4,7 @@
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const GEMINI_ENDPOINT =
-    "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent";
 
 
 function buildPrompt({ temperature, humidity, moisture, rainfall }) {

@@ -1,23 +1,21 @@
 // components/AskAIFab.jsx - REDESIGNED VERSION (FIXED)
+import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
 import { useState } from "react";
 import {
-    Modal,
-    View,
-    Text,
-    Pressable,
-    TextInput,
     ActivityIndicator,
-    StyleSheet,
-    ScrollView,
     KeyboardAvoidingView,
-    Platform
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useFieldData } from "../contexts/FieldContext";
 import { helpAnswer } from "../services/geminiService";
-import { theme } from "../constants/theme";
-import { hp, wp } from "../helpers/common";
-import LottieView from "lottie-react-native";
 
 export default function AskAIFab() {
     const { fieldData } = useFieldData();
@@ -238,7 +236,7 @@ const styles = StyleSheet.create({
     // FAB Styles
     fab: {
         position: "absolute",
-        bottom: 110,
+        bottom: 10,
         right: 20,
         width: 56,
         height: 56,
