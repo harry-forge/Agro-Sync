@@ -5,8 +5,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
-import { LocationProvider } from "../contexts/LocationContext";
 import { FieldProvider } from "../contexts/FieldContext";
+import { LocationProvider } from "../contexts/LocationContext";
 
 // Prevent the splash screen from auto-hiding while we load the fonts
 SplashScreen.preventAutoHideAsync();
