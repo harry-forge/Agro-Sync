@@ -1,9 +1,12 @@
+import * as FileSystem from 'expo-file-system';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Alert } from 'react-native';
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { LocationProvider } from "../contexts/LocationContext";
+import { FieldProvider } from "../contexts/FieldContext";
 
 // Prevent the splash screen from auto-hiding while we load the fonts
 SplashScreen.preventAutoHideAsync();
@@ -12,7 +15,9 @@ const RootLayoutWithProvider = () => {
     return(
         <AuthProvider>
             <LocationProvider>
-                <MainLayout />
+                <FieldProvider>
+                    <MainLayout />
+                </FieldProvider>
             </LocationProvider>
         </AuthProvider>
     )
@@ -75,6 +80,35 @@ export function MainLayout() {
 
     if (!fontsLoaded && !fontError) {
         return null;
+    }
+
+    // Global JS error handler - captures uncaught exceptions in release builds
+    // and logs them to a file for later inspection.
+    // This helps diagnose crashes that only happen in production APKs.
+    try {
+        const globalHandler = global.ErrorUtils && global.ErrorUtils.getGlobalHandler && global.ErrorUtils.getGlobalHandler();
+        const setHandler = (error, isFatal) => {
+            const timestamp = new Date().toISOString();
+            const content = `${timestamp} - ${isFatal ? 'FATAL' : 'ERROR'} - ${error?.message || error}\n${error?.stack || ''}\n\n`;
+            const logFile = FileSystem.documentDirectory + 'app_error_logs.txt';
+            FileSystem.appendFileAsync
+                ? FileSystem.appendFileAsync(logFile, content).catch(() => {})
+                : FileSystem.writeAsStringAsync(logFile, content, { encoding: FileSystem.EncodingType.UTF8 }).catch(() => {});
+            // Show an alert in debug builds so developer notices; in production this won't be intrusive.
+            try {
+                Alert.alert('App error', 'An unexpected error occurred. A log has been saved.');
+            } catch (e) {}
+            // call original handler if present
+            if (typeof globalHandler === 'function') {
+                try { globalHandler(error, isFatal); } catch (e) {}
+            }
+        };
+
+        if (global.ErrorUtils && global.ErrorUtils.setGlobalHandler) {
+            global.ErrorUtils.setGlobalHandler(setHandler);
+        }
+    } catch (e) {
+        // ignore
     }
 
     return (

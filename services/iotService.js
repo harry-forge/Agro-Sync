@@ -47,8 +47,7 @@ class IoTService {
 
     formatSoilMoisture(soil) {
         // Convert soil sensor reading to percentage (0-4095 range)
-        const percentage = Math.round((soil / 4095) * 100);
-        return `${percentage}%`;
+       return `${Math.round(soil)}%`;
     }
 
     formatLightLevel(light) {

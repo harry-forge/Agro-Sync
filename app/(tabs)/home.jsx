@@ -1,18 +1,18 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from 'expo-location';
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import LottieView from 'lottie-react-native';
+import { MotiView } from 'moti';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { MotiView } from 'moti';
-import Button from "../../components/Button";
+import AskAIFab from "../../components/AskAIFab";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { theme } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { hp, wp } from "../../helpers/common";
 import { iotService } from "../../services/iotService";
 import { weatherService } from "../../services/weatherService";
-import Ionicons from "@expo/vector-icons/Ionicons";
 
 const Home = () => {
     const { user, logout } = useAuth();
@@ -342,17 +342,21 @@ const Home = () => {
         'windy': require('../../assets/animations/windy.json')
     };
 
-    const onLogout = async () => {
-        setLoading(true);
-        const result = await logout();
-        if(result.success) {
-            router.replace('/welcome');
-        }
-        setLoading(false);
-    };
-
     const onProfilePress = () => {
         router.push("/profile");
+    };
+
+    const onLogout = async () => {
+        try {
+            const result = await logout();
+            if (result.success) {
+                router.replace('/welcome');
+            } else {
+                console.error('Logout failed:', result.error);
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
     };
 
     return (
@@ -790,13 +794,23 @@ const Home = () => {
                             </View>
                             <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
                         </Pressable>
+
+                        <Pressable
+                            style={styles.logoutButton}
+                            onPress={onLogout}
+                        >
+                            <View style={styles.logoutIconContainer}>
+                                <Ionicons name="log-out-outline" size={24} color="#dc2626" />
+                            </View>
+                            <View style={styles.actionContent}>
+                                <Text style={styles.logoutTitle}>Log Out</Text>
+                                <Text style={styles.logoutSubtitle}>Sign out of your account</Text>
+                            </View>
+                        </Pressable>
                     </View>
                 </MotiView>
-
-                <View style={styles.footer}>
-                    <Button loading={loading} title={'Log Out'} onPress={onLogout} />
-                </View>
             </ScrollView>
+            <AskAIFab />
         </ScreenWrapper>
     )
 }
@@ -1073,8 +1087,41 @@ const styles = StyleSheet.create({
         fontFamily: 'SFNSText-Regular',
         color: '#64748b',
     },
-    footer: {
-        marginTop: hp(1),
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: wp(4),
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#fecaca',
+        shadowColor: '#dc2626',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    logoutIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#fef2f2',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#fecaca',
+        marginRight: wp(3),
+    },
+    logoutTitle: {
+        fontSize: hp(1.6),
+        fontFamily: 'SFNSDisplay-Bold',
+        color: '#dc2626',
+        marginBottom: hp(0.2),
+    },
+    logoutSubtitle: {
+        fontSize: hp(1.3),
+        fontFamily: 'SFNSText-Regular',
+        color: '#991b1b',
     },
 
     // --- Styles from prevHome.jsx (Merged IoT Section) ---

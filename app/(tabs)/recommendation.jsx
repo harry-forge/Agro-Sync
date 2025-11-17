@@ -545,6 +545,7 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         padding: wp(5),
+        paddingBottom: hp(15), // Extra padding to scroll above navigation bar
     },
     marketCard: {
         backgroundColor: 'white',

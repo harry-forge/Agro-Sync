@@ -41,14 +41,12 @@ class MarketPriceService {
                 setTimeout(() => reject(new Error('Request timeout - switching to fallback')), 3000);
             });
 
-            // Create the fetch promise
+            // Create the fetch promise - React Native compatible
             const fetchPromise = fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                // Add a shorter timeout at the request level
-                signal: AbortSignal.timeout(3000)
+                }
             });
 
             // Race between timeout and fetch

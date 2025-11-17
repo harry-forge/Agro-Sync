@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512" style="border:1px solid #000;"></canvas>
+    <br>
+    <button onclick="downloadIcon('foreground')">Download Foreground</button>
+    <button onclick="downloadIcon('background')">Download Background</button>
+    <button onclick="downloadIcon('monochrome')">Download Monochrome</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Draw the icon (based on your logo)
+        function drawIcon(type) {
+            ctx.clearRect(0, 0, 512, 512);
+            
+            if (type === 'background') {
+                // White background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 512, 512);
+                return;
+            }
+
+            // Draw the circle
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 32;
+            ctx.beginPath();
+            ctx.arc(256, 256, 240, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Draw the M-like shape
+            ctx.fillStyle = type === 'monochrome' ? '#ffffff' : '#000000';
+            ctx.beginPath();
+            
+            // Left mountain peak
+            ctx.moveTo(160, 320);
+            ctx.lineTo(200, 200);
+            ctx.lineTo(240, 280);
+            ctx.lineTo(280, 200);
+            ctx.lineTo(320, 320);
+            ctx.lineTo(280, 320);
+            ctx.lineTo(260, 240);
+            ctx.lineTo(240, 280);
+            ctx.lineTo(220, 240);
+            ctx.lineTo(200, 320);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function downloadIcon(type) {
+            drawIcon(type);
+            const link = document.createElement('a');
+            link.download = `android-icon-${type}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Draw initial icon
+        drawIcon('foreground');
+    </script>
+</body>
+</html>

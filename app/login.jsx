@@ -43,10 +43,17 @@ const Login = () => {
             // Success! User logged in
             console.log('Login successful! User:', data.user.email);
             
-            // Give a small delay to let AuthContext update, then navigate
+            // Give a small delay to let AuthContext update, then navigate.
+            // Wrap navigation in try/catch to avoid unexpected crashes in release builds.
             setTimeout(() => {
-                router.replace('/home');
-            }, 100);
+                try {
+                    router.replace('/home');
+                } catch (navErr) {
+                    console.error('Navigation error after login:', navErr);
+                    // fallback: try navigating to root
+                    try { router.replace('/'); } catch (e) {}
+                }
+            }, 150);
         }
     }
 

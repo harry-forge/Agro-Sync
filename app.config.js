@@ -3,30 +3,32 @@ import 'dotenv/config';
 export default {
     expo: {
         name: "AgroSync",
-        slug: "AgroSync",
+        slug: "agrosync",
         version: "1.0.0",
         orientation: "portrait",
-        icon: "./assets/images/boardingImage.png",
+        icon: "./assets/images/logo.png",
         scheme: "agrosync",
         userInterfaceStyle: "automatic",
         newArchEnabled: true,
+        platforms: ["ios", "android", "web"],
 
-        ios: { supportsTablet: true },
+        ios: { 
+            supportsTablet: true,
+            bundleIdentifier: "com.agrosync.app"
+        },
 
         android: {
             adaptiveIcon: {
-                backgroundColor: "#E6F4FE",
-                foregroundImage: "./assets/images/android-icon-foreground.png",
-                backgroundImage: "./assets/images/android-icon-background.png",
-                monochromeImage: "./assets/images/android-icon-monochrome.png"
+                backgroundColor: "#ffffff",
+                foregroundImage: "./assets/images/logo.png"
             },
-            edgeToEdgeEnabled: true,
-            predictiveBackGestureEnabled: false
+            package: "com.agrosync.app",
+            versionCode: 1
         },
 
         web: {
             output: "static",
-            favicon: "./assets/images/boardingImage.png"
+            favicon: "./assets/images/logo.png"
         },
 
         plugins: [
@@ -34,23 +36,34 @@ export default {
             [
                 "expo-splash-screen",
                 {
-                    image: "./assets/images/boardingImage.png",
+                    image: "./assets/images/logo.png",
                     imageWidth: 200,
                     resizeMode: "contain",
-                    backgroundColor: "#ffffff",
-                    dark: { backgroundColor: "#000000" }
+                    backgroundColor: "#ffffff"
                 }
             ],
             "expo-font",
-            "expo-sqlite"
+            "expo-sqlite",
+            [
+                "expo-location",
+                {
+                    locationAlwaysAndWhenInUsePermission: "This app uses location to provide weather information."
+                }
+            ]
+        ],
+
+        assetBundlePatterns: [
+            "**/*"
         ],
 
         experiments: {
-            typedRoutes: true,
-            reactCompiler: true
+            typedRoutes: true
         },
 
         extra: {
+            eas: {
+                projectId: "90f74014-2be5-45df-96aa-41e00f7e127c"
+            },
             supabaseUrl: process.env.EXPO_SUPABASE_URL,
             supabaseAnonKey: process.env.EXPO_SUPABASE_ANON_KEY,
             weatherApiKey: process.env.EXPO_PUBLIC_WEATHER_API_KEY

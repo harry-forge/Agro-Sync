@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Image,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../contexts/AuthContext';
-import { getUserData, updateProfile, uploadAvatar } from '../../services/userService';
-import { theme } from "../../constants/theme";
-import { hp, wp } from "../../helpers/common"; // Import hp/wp
-import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '../../lib/supabase';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import LottieView from 'lottie-react-native'; // Import Lottie
 import { MotiView } from 'moti'; // Import Moti
+import { useCallback, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { theme } from "../../constants/theme";
+import { useAuth } from '../../contexts/AuthContext';
+import { hp, wp } from "../../helpers/common"; // Import hp/wp
+import { supabase } from '../../lib/supabase';
+import { getUserData, updateProfile, uploadAvatar } from '../../services/userService';
 
 const Profile = () => {
     const { user, setUserData, logout } = useAuth();
@@ -250,10 +249,11 @@ const Profile = () => {
                     text: 'Logout',
                     style: 'destructive',
                     onPress: async () => {
-                        setLoading(true); // Use the main loader
+                        setLoading(true);
                         const result = await logout();
                         if (result.success) {
-                            router.replace('/welcome');
+                            // Use replace to force navigation to welcome page
+                            router.replace('/');
                         } else {
                             Alert.alert('LogOut Error', result.error || 'Failed to log out. Please try again.');
                         }

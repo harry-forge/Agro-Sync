@@ -23,6 +23,14 @@ export const AuthProvider = ({children}) => {
                 console.log('Logout error:', error);
                 return {success: false, error: error.message};
             }
+            // Force clear user state immediately and wait briefly for state update
+            setUser(null);
+            setIsInitialized(false);
+            
+            // Small delay to ensure state updates propagate
+            await new Promise(resolve => setTimeout(resolve, 100));
+            setIsInitialized(true);
+            
             return {success: true};
         } catch (error) {
             console.log('Logout error:', error);
@@ -37,10 +45,10 @@ export const AuthProvider = ({children}) => {
         const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session)=> {
             if (!isMounted) return;
             
-            // Only log significant events (temporarily disabled to stop spam)
-            // if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || (_event === 'INITIAL_SESSION' && !isInitialized)) {
-            //     console.log('Auth Event:', _event, 'Session User:', session?.user?.id);
-            // }
+            // Log important auth events for debugging
+            if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || (_event === 'INITIAL_SESSION' && !isInitialized)) {
+                console.log('Auth Event:', _event, 'Session User:', session?.user?.id || 'No user');
+            }
 
             if (session && session.user) {
                 setAuth(session?.user);
@@ -54,6 +62,7 @@ export const AuthProvider = ({children}) => {
                     console.log('Error getting user data:', error);
                 }
             } else {
+                console.log('No session, clearing user state');
                 setAuth(null);
             }
             
