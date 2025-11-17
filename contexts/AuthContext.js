@@ -51,16 +51,32 @@ export const AuthProvider = ({children}) => {
             }
 
             if (session && session.user) {
-                setAuth(session?.user);
-                // Get user data
+                console.log('Setting user from session:', session.user); // Debug log
+                console.log('Session user email:', session.user.email); // Debug log
+                
+                // Always keep the session user as base data
+                let finalUser = session.user;
+                
+                // Try to get additional user data from database
                 try {
                     const res = await getUserData(session?.user?.id);
-                    if (res.success) {
-                        setUserData({...session?.user, ...res.data});
+                    if (res.success && res.data) {
+                        // Merge database data with session data, keeping session email
+                        finalUser = {
+                            ...session.user,  // Session data (including email) comes first
+                            ...res.data,      // Database data overlays
+                            email: session.user.email  // Ensure email always comes from session
+                        };
+                        console.log('Merged user data:', finalUser); // Debug log
+                    } else {
+                        console.log('No database user data, using session data only');
                     }
                 } catch (error) {
-                    console.log('Error getting user data:', error);
+                    console.log('Error getting user data, using session data only:', error);
                 }
+                
+                // Set the final user data
+                setUser(finalUser);
             } else {
                 console.log('No session, clearing user state');
                 setAuth(null);

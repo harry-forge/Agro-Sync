@@ -49,18 +49,37 @@ const Profile = () => {
     const fetchUserData = async () => {
         try {
             setLoading(true);
+            console.log('Current user object in profile:', user); // Debug log
+            console.log('User email in profile:', user?.email); // Debug log
+            
             const res = await getUserData(user.id);
             if (res.success && res.data) {
                 setLocalUserData({
-                    name: res.data.name || 'User',
-                    email: user.email || 'xyz@email.com',
+                    name: res.data.name || user?.name || user?.user_metadata?.name || 'User',
+                    email: user?.email || 'No email found', // Always use session email first
                     phoneNumber: res.data.phoneNumber || '',
                     address: res.data.address || '',
                     bio: res.data.bio || 'New user to our community! Set your bio to let people know more about you.',
                     image: res.data.image || null,
                     created_at: res.data.created_at || null,
                 });
+            } else {
+                // Fallback if no user data found in database
+                setLocalUserData({
+                    name: user?.name || user?.user_metadata?.name || 'User',
+                    email: user?.email || 'No email found',
+                    phoneNumber: '',
+                    address: '',
+                    bio: 'New user to our community! Set your bio to let people know more about you.',
+                    image: null,
+                    created_at: null,
+                });
             }
+            
+            console.log('Final userData set:', {
+                name: userData.name,
+                email: userData.email
+            });
         } catch (error) {
             console.error('Error fetching user data:', error);
             Alert.alert('Error', 'Failed to load profile data');
