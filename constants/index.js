@@ -1,2 +1,1 @@
-// export const supabaseUrl = 'https://hbmurzyncfsbheusjjpv.supabase.co'
-// export const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhibXVyenluY2ZzYmhldXNqanB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDcwNzcsImV4cCI6MjA3NjgyMzA3N30.na7nYVkWUwH5nznFKv7MVz0LpPL1DYhinx3W4wBrN4I"
+
